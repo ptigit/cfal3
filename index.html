@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CFA L3 Sprints</title>
+<style>
+:root{
+  --bg:#0e1014; --surface:#181b22; --surface-2:#20242d; --line:#2b303b;
+  --ink:#eef1f6; --dim:#8f97a8; --faint:#5d6474;
+  --accent:#6b8afd; --accent-2:#9c7bfa;
+  --ok:#3ddc97; --warn:#ffb454; --bad:#ff6b6b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:var(--bg); color:var(--ink);
+  display:flex; flex-direction:column;
+  min-height:100dvh;
+  padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+.wrap{width:100%;max-width:520px;margin:0 auto;padding:0 16px;flex:1;display:flex;flex-direction:column}
+
+/* ---------- top bar ---------- */
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 0 10px;gap:10px}
+.topbar h1{font-size:.95rem;margin:0;font-weight:650;letter-spacing:.2px}
+.topbar .sub{font-size:.7rem;color:var(--faint);margin-top:2px}
+.icon-btn{background:var(--surface);border:1px solid var(--line);color:var(--dim);
+  border-radius:10px;padding:7px 11px;font-size:.75rem;font-weight:600;cursor:pointer}
+
+/* ---------- home ---------- */
+.hero{background:linear-gradient(150deg,#1d2331,#151820);border:1px solid var(--line);
+  border-radius:20px;padding:20px;margin-top:6px}
+.hero .eyebrow{font-size:.66rem;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);font-weight:700}
+.hero h2{margin:8px 0 4px;font-size:1.22rem}
+.hero p{margin:0;color:var(--dim);font-size:.83rem;line-height:1.45}
+.big-btn{width:100%;margin-top:16px;border:none;border-radius:14px;padding:15px;
+  font-size:.95rem;font-weight:700;color:#0b0d11;cursor:pointer;
+  background:linear-gradient(120deg,var(--accent),var(--accent-2))}
+.big-btn.secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--line);
+  font-weight:600;font-size:.86rem;padding:13px;margin-top:9px}
+
+.stat-row{display:flex;gap:8px;margin-top:14px}
+.stat{flex:1;background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:11px 6px;text-align:center}
+.stat b{display:block;font-size:1.15rem;line-height:1.2}
+.stat span{font-size:.63rem;color:var(--faint);text-transform:uppercase;letter-spacing:.5px}
+.stat.ok b{color:var(--ok)} .stat.warn b{color:var(--warn)} .stat.tot b{color:var(--accent)}
+
+.section-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--faint);font-weight:700;margin:22px 0 9px}
+
+/* topic strength list */
+.topic{background:var(--surface);border:1px solid var(--line);border-radius:13px;
+  padding:11px 13px;margin-bottom:7px;cursor:pointer}
+.topic-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.topic-name{font-size:.82rem;font-weight:600}
+.topic-pct{font-size:.72rem;color:var(--dim);white-space:nowrap;font-variant-numeric:tabular-nums}
+.bar{height:4px;background:#262b35;border-radius:3px;margin-top:8px;overflow:hidden}
+.bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--ok),#2fae7c)}
+.bar.weak i{background:linear-gradient(90deg,var(--bad),var(--warn))}
+.bar.mid i{background:linear-gradient(90deg,var(--warn),#ffd08a)}
+
+/* ---------- sprint ---------- */
+.sprint-head{display:flex;align-items:center;gap:10px;padding:12px 0 8px}
+.dots{display:flex;gap:5px;flex:1}
+.dot{height:4px;flex:1;border-radius:3px;background:#262b35}
+.dot.done{background:var(--accent)}
+.dot.active{background:var(--accent-2)}
+.close-x{background:none;border:none;color:var(--faint);font-size:1.25rem;cursor:pointer;padding:0 2px;line-height:1}
+
+.cat-tag{font-size:.65rem;text-transform:uppercase;letter-spacing:.6px;
+  color:var(--accent);font-weight:700;margin-bottom:11px}
+
+.card-area{flex:1;display:flex;flex-direction:column;justify-content:center;
+  padding:4px 0 12px;min-height:0}
+.panel{background:linear-gradient(155deg,#1b1f28,#14171d);border:1px solid var(--line);
+  border-radius:20px;padding:20px;box-shadow:0 12px 34px rgba(0,0,0,.4)}
+.prompt{font-size:1.05rem;line-height:1.48;margin:0 0 4px;font-weight:500}
+.prompt.small{font-size:.98rem}
+
+/* list-builder */
+.slot{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-top:1px solid #23272f}
+.slot:first-of-type{border-top:none}
+.slot-num{flex:0 0 20px;height:20px;border-radius:6px;background:#262b35;color:var(--faint);
+  font-size:.68rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.slot.open .slot-num{background:rgba(107,138,253,.18);color:var(--accent)}
+.slot-text{flex:1;font-size:.9rem;line-height:1.45;color:var(--ink)}
+.slot-text.hidden{color:var(--faint);font-style:italic;font-size:.83rem}
+.list-meta{font-size:.72rem;color:var(--faint);margin:12px 0 2px;text-align:center}
+
+/* contrast */
+.col{border:1px solid var(--line);border-radius:14px;padding:13px;margin-top:10px;
+  background:rgba(255,255,255,.015);cursor:pointer}
+.col-label{font-size:.78rem;font-weight:700;color:var(--accent-2);margin-bottom:2px}
+.col-tap{font-size:.72rem;color:var(--faint)}
+.col ul{margin:8px 0 0;padding-left:17px}
+.col li{font-size:.86rem;line-height:1.45;margin-bottom:5px}
+
+/* qa reveal */
+.answer{margin-top:14px;padding-top:14px;border-top:1px solid #23272f;
+  font-size:.93rem;line-height:1.5;color:var(--ink)}
+.tap-hint{text-align:center;color:var(--faint);font-size:.73rem;margin-top:14px}
+
+.grade-row{display:flex;gap:9px;margin-top:14px}
+.grade{flex:1;border:none;border-radius:14px;padding:14px 8px;font-size:.86rem;
+  font-weight:700;cursor:pointer;color:#0b0d11}
+.grade.miss{background:linear-gradient(120deg,#ff8a5c,var(--bad))}
+.grade.got{background:linear-gradient(120deg,var(--ok),#1fb37a)}
+.reveal-btn{width:100%;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);
+  border-radius:14px;padding:14px;font-size:.88rem;font-weight:600;cursor:pointer;margin-top:14px}
+
+/* ---------- done ---------- */
+.done-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;text-align:center;padding:20px 0}
+.done-mark{font-size:2.6rem}
+.done-wrap h2{margin:10px 0 6px;font-size:1.3rem}
+.done-wrap p{color:var(--dim);font-size:.87rem;margin:0;line-height:1.5}
+.recap{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:12px;margin-top:18px;text-align:left}
+.recap-item{font-size:.78rem;color:var(--dim);padding:6px 0;border-top:1px solid #23272f;line-height:1.4}
+.recap-item:first-child{border-top:none}
+.recap-item b{color:var(--ink);font-weight:600}
+
+.muted-note{font-size:.72rem;color:var(--faint);text-align:center;margin-top:16px;line-height:1.5}
+.hidden-el{display:none}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"><div style="padding:40px;text-align:center;color:#5d6474;font-size:.85rem">Loading…</div></div>
+
+<script>
+/* ============================================================
+   CARD BANK — drawn from the uploaded revision summaries
+   types: qa | list | contrast
+   ============================================================ */
+const CARDS = [
+
+/* ---------- AA · CME Framework & Macro ---------- */
+{t:"list",c:"AA · CME Framework & Macro",q:"The 7 steps of the capital market expectations-setting process.",
+ items:["Specify the set of expectations needed, incl. time horizons","Research the historical record","Specify the methods/models and their information requirements","Determine the best sources for information needs","Interpret the current investment environment using judgment","Provide the expectations and document conclusions","Monitor outcomes, compare to forecasts, feed back"]},
+{t:"list",c:"AA · CME Framework & Macro",q:"Challenges in setting capital market expectations.",
+ items:["Limitations of economic data (timeliness, changing definitions)","Data measurement errors and biases (survivorship, appraisal smoothing)","Limitations of historical estimates (nonstationarity, fat tails)","Ex post risk as a biased risk measure","Bias in methods (data-mining, time-period bias)","Failure to account for conditioning information","Misinterpretation of correlations","Psychological biases (anchoring, confirmation, overconfidence…)","Model uncertainty"]},
+{t:"list",c:"AA · CME Framework & Macro",q:"The most important sources of exogenous shocks to growth trends.",
+ items:["Policy changes","New products and technologies","Geopolitics","Natural disasters","Natural resources / critical inputs","Financial crises"]},
+{t:"contrast",c:"AA · CME Framework & Macro",q:"Cross-sectional vs intertemporal consistency in CME setting.",
+ left:{label:"Cross-sectional",points:["Consistency across asset classes at a point in time","Ensures relative pricing between classes hangs together"]},
+ right:{label:"Intertemporal",points:["Consistency across various time horizons","Short- and long-horizon forecasts must cohere"]},
+ note:"Both matter far more than the accuracy of any single asset class projection."},
+{t:"list",c:"AA · CME Framework & Macro",q:"The three main approaches to economic forecasting.",
+ items:["Econometric models — disciplined and quantitative, but complex, mis-specification risk, poor at turning points","Indicators (lead/lag/coincident) — simplest, few statistics needed, but false signals and revision/overfitting risk","Checklists — most flexible and adaptive, but most subjective, time-consuming, limits depth and consistency"]},
+{t:"list",c:"AA · CME Framework & Macro",q:"The five business cycle phases and their capital market implications.",
+ items:["Initial Recovery — short rates & yields low, yields bottoming; stocks may rise strongly; cyclical/risky assets outperform","Early Expansion — short rates moving up; long yields stable/slightly rising; stocks trending up","Late Expansion — rates rise, curve flattens; stocks often rise but volatile; inflation hedges outperform cyclicals","Slowdown — short rates at/near peak; govt yields peak then fall sharply; curve may invert; spreads widen; quality/interest-sensitive stocks best","Contraction — rates and yields drop; curve steepens; stocks fall then rise before recovery; spreads stay wide until trough is clear"]},
+{t:"qa",c:"AA · CME Framework & Macro",q:"What is the Taylor Rule used for in setting capital market expectations?",
+ a:"Assessing a central bank's current policy stance and predicting how that stance is likely to evolve."},
+{t:"contrast",c:"AA · CME Framework & Macro",q:"Effect of persistently loose fiscal vs loose monetary policy.",
+ left:{label:"Loose fiscal policy",points:["Raises the average level of real interest rates","Tight fiscal policy reduces them"]},
+ right:{label:"Loose monetary policy",points:["Raises average actual and expected inflation","Tight monetary policy reduces them"]},
+ note:"If one is persistently loose and the other tight, the impact on nominal rates is ambiguous."},
+{t:"qa",c:"AA · CME Framework & Macro",q:"Under what condition will two countries share a default-free yield curve?",
+ a:"Only if there is perfect capital mobility AND the exchange rate is credibly fixed forever. It is the lack of credibly fixed rates that lets yield curves — and bond returns — be imperfectly correlated across markets."},
+{t:"qa",c:"AA · CME Framework & Macro",q:"With floating rates, how must interest rates differ to equalise risk-adjusted expected returns across markets?",
+ a:"Rates must be higher in a currency expected to depreciate and lower in one expected to appreciate. This can cause the exchange rate to overshoot in one direction to generate the expectation of movement in the other."},
+{t:"list",c:"AA · CME Framework & Macro",q:"The four mechanisms keeping the current and capital accounts in balance.",
+ items:["Changes in income (GDP)","Relative prices","Interest rates and asset prices","Exchange rates"]},
+
+/* ---------- AA · Forecasting Returns ---------- */
+{t:"list",c:"AA · Forecasting Returns",q:"The three broad categories of formal return-forecasting tools.",
+ items:["Statistical methods (sample stats, shrinkage, time-series)","Discounted cash flow models","Risk premium models (equilibrium e.g. CAPM, factor models, building blocks)"]},
+{t:"list",c:"AA · Forecasting Returns",q:"The four building blocks of fixed-income expected returns.",
+ items:["Short-term default-free rate","Term premium — roughly proportional to duration","Credit premium — tends to be larger at the short end of the curve","Liquidity premium"],
+ note:"Both term and credit premiums are positively related to the slope of the yield curve."},
+{t:"list",c:"AA · Forecasting Returns",q:"The three components of the Grinold–Kroner model of expected equity return.",
+ items:["Expected cash flow return = dividend yield − rate of change in shares outstanding","Expected return from nominal earnings growth","Expected repricing return = rate of change in the P/E"]},
+{t:"qa",c:"AA · Forecasting Returns",q:"What does the Singer–Terhaar model combine?",
+ a:"A global CAPM equilibrium assuming full market integration, blended with expected returns for each asset class based on complete segmentation."},
+{t:"qa",c:"AA · Forecasting Returns",q:"Define the cap rate and give the real-estate analogue of Grinold–Kroner.",
+ a:"Cap rate = net operating income ÷ property value — the standard commercial real estate valuation metric. E(R_re) = cap rate + NOI growth rate − %Δcap rate."},
+{t:"list",c:"AA · Forecasting Returns",q:"The building-block risk premiums embedded in real estate expected returns.",
+ items:["Term premium — long-lived asset with stable cash flows, so high duration","Credit premium — a fixed-term lease resembles a corporate bond secured by the property","Equity premium — owners bear value, rent growth, renewal and vacancy risk","Liquidity premium — trades infrequently and is costly to transact"]},
+{t:"qa",c:"AA · Forecasting Returns",q:"Why is historical real estate return data problematic?",
+ a:"It is subject to substantial appraisal smoothing, which biases volatility estimates downward and distorts correlations. Failing to adjust for it almost certainly leads to distorted portfolio analysis and poor allocation decisions."},
+{t:"qa",c:"AA · Forecasting Returns",q:"Over what horizon is PPP a useful predictor of exchange rates?",
+ a:"A poor predictor over short-to-intermediate horizons, but a progressively better guide over longer multi-year horizons."},
+{t:"list",c:"AA · Forecasting Returns",q:"The two main problems with using the sample VCV matrix as a forecast.",
+ items:["It cannot be used for large numbers of asset classes","It is subject to substantial sampling error"],
+ note:"Linear factor models fix the dimensionality problem but are biased/inconsistent unless the assumed structure is true. Shrinkage blends sample and target VCV."},
+{t:"qa",c:"AA · Forecasting Returns",q:"What behaviour in asset returns did ARCH models address?",
+ a:"Volatility clustering — periods of persistently high and low volatility. A simple ARCH model represents today's variance as a linear combination of yesterday's variance and a new volatility shock."},
+
+/* ---------- AA · Overview & Principles ---------- */
+{t:"contrast",c:"AA · Overview & Principles",q:"Asset-only vs liability-relative vs goals-based approaches (risk focus).",
+ left:{label:"Asset-only",points:["Focuses on the asset side of the economic balance sheet","Risk concept: asset risk (e.g. volatility of returns)"]},
+ right:{label:"Liability-relative / Goals-based",points:["Liability-relative: focuses on funding liabilities; risk = risk relative to paying them","Goals-based: focuses on achieving financial goals; risk = probability of not achieving each goal"]}},
+{t:"list",c:"AA · Overview & Principles",q:"Criteria for specifying a good set of asset classes.",
+ items:["Assets within a class should be relatively homogeneous","Classes should be mutually exclusive","Classes should be diversifying","As a group they should make up a preponderance of world investable wealth","Each should be able to absorb a meaningful proportion of the portfolio"]},
+{t:"contrast",c:"AA · Overview & Principles",q:"Calendar-based vs range-based rebalancing.",
+ left:{label:"Calendar-based",points:["Rebalances to target weights on a fixed periodic schedule","Simple; but asset mix can drift far between dates"]},
+ right:{label:"Range-based",points:["Sets thresholds/trigger points around target weights","Ranges may be fixed-width, percentage-based, or volatility-based","Permits tighter control of the asset mix"]}},
+{t:"list",c:"AA · Overview & Principles",q:"The criticisms of mean–variance optimisation (MVO).",
+ items:["Outputs are highly sensitive to small changes in inputs","Allocations are highly concentrated in a subset of classes","Ignores skewness and kurtosis that investors care about","Assets may look diversified while sources of risk are not","No direct connection to factors driving liabilities or consumption","Single-period framework — ignores rebalancing costs and taxes"]},
+{t:"qa",c:"AA · Overview & Principles",q:"What is the Black–Litterman model, and what problem does it address?",
+ a:"Deriving expected returns by reverse optimisation tilted toward the investor's own views. It addresses MVO's tendency to produce 'efficient' portfolios that are not well diversified. Weight constraints and resampling address the same concern."},
+{t:"qa",c:"AA · Overview & Principles",q:"When is a risk budget optimal?",
+ a:"When the ratio of excess return to marginal contribution to total risk is the same for all assets in the portfolio."},
+{t:"list",c:"AA · Overview & Principles",q:"The three approaches to liability-relative asset allocation.",
+ items:["Surplus optimisation — MVO applied to surplus returns","Hedging / return-seeking portfolios — one portfolio hedges the liability stream, remaining funds seek return","Integrated asset–liability approach — jointly optimises asset and liability decisions"]},
+{t:"list",c:"AA · Overview & Principles",q:"Characteristics of liabilities that affect liability-relative asset allocation.",
+ items:["Fixed versus contingent cash flows","Legal versus quasi-liabilities","Duration and convexity of liability cash flows","Value of liabilities vs size of the sponsoring organisation","Factors driving future cash flows (inflation, economy, rates, risk premium)","Timing considerations such as longevity risk","Regulations affecting liability cash flow calculations"]},
+{t:"list",c:"AA · Overview & Principles",q:"Interpretations of why disciplined rebalancing adds return.",
+ items:["It earns a diversification return","It earns a return from being short volatility","It earns a return for supplying liquidity to the market"]},
+{t:"qa",c:"AA · Overview & Principles",q:"Which factors widen the optimal rebalancing corridor, and which narrow it?",
+ a:"Widen: transaction costs, risk tolerance, and correlation with the rest of the portfolio (higher correlation → wider, since further divergence is less likely). Narrow: volatility of the rest of the portfolio (inversely related). Own volatility trades transaction costs off against risk control."},
+
+/* ---------- AA · Real-World Constraints ---------- */
+{t:"list",c:"AA · Real-World Constraints",q:"The primary constraints on an asset allocation decision.",
+ items:["Asset size — too small or too large to access certain classes efficiently","Liquidity — needs of the owner and characteristics of the classes","Time horizon — human capital and changing character of liabilities","External considerations — taxes, regulation, funding and financing needs"]},
+{t:"qa",c:"AA · Real-World Constraints",q:"How do taxes alter asset allocation inputs?",
+ a:"Taxes reduce the expected mean return and mute the dispersion of returns, so return and standard deviation assumptions must be adjusted per asset class. Correlation assumptions do not need adjusting. Rebalancing thresholds may be wider for taxable portfolios."},
+{t:"qa",c:"AA · Real-World Constraints",q:"What is strategic asset location (not allocation)?",
+ a:"The placement of less tax-efficient assets in accounts with more favourable tax treatment."},
+{t:"list",c:"AA · Real-World Constraints",q:"Ways the success of tactical asset allocation (TAA) is measured against the SAA.",
+ items:["Comparing Sharpe ratios of the TAA vs SAA portfolio","Evaluating the information ratio or t-statistic of average excess return","Plotting outcomes versus the efficient frontier"]},
+{t:"contrast",c:"AA · Real-World Constraints",q:"Discretionary vs systematic TAA.",
+ left:{label:"Discretionary TAA",points:["Qualitative interpretation of political, economic and market conditions","Predicated on belief in persistent manager skill at short-term timing"]},
+ right:{label:"Systematic TAA",points:["Relies on quantitative signals","Captures documented return anomalies inconsistent with market efficiency"]}},
+{t:"list",c:"AA · Real-World Constraints",q:"The behavioural biases most relevant in asset allocation.",
+ items:["Loss aversion — mitigate via shortfall framing or funding key goals with low-risk assets","Illusion of control — mitigate via a formal process with long-term forecasts and policy ranges","Mental accounting — goals-based investing incorporates it directly via sub-portfolios","Recency bias — constrained by pre-specified allowable ranges","Framing — mitigate by presenting choices with multiple risk/reward perspectives","Availability / familiarity bias — mitigate by anchoring on the global market portfolio"]},
+
+/* ---------- PC · Equity ---------- */
+{t:"list",c:"PC · Equity Portfolio Mgmt",q:"The roles equities can play in a portfolio.",
+ items:["Capital appreciation","Dividend income","Diversification with other asset classes","Potential hedge against inflation"]},
+{t:"list",c:"PC · Equity Portfolio Mgmt",q:"Sources of equity portfolio income and of equity portfolio costs.",
+ items:["Income: dividends, securities lending fees and interest, dividend capture, covered calls, cash-covered puts","Costs: management fees, performance fees, administration fees, marketing/distribution fees, trading costs"]},
+{t:"qa",c:"PC · Equity Portfolio Mgmt",q:"What must an equity benchmark index be, and what characteristics matter?",
+ a:"It must be rule-based, transparent, and investable. Key characteristics: market covered (domestic/foreign), market cap of constituents, position on the value–growth spectrum, and other risk factors."},
+{t:"contrast",c:"PC · Equity Portfolio Mgmt",q:"Index rebalancing vs reconstitution.",
+ left:{label:"Rebalancing",points:["Adjusts constituent weights after price changes, mergers, corporate events","Corrects drift from the intended weighting scheme"]},
+ right:{label:"Reconstitution",points:["Deletes names no longer qualifying for the index","Adds names approved as new index members"]}},
+{t:"list",c:"PC · Equity Portfolio Mgmt",q:"Disadvantages of shareholder engagement.",
+ items:["Costs and time involved","Pressure on the company to meet near-term price or earnings targets","Possible selective disclosure of information","Potential conflicts of interest"]},
+
+/* ---------- PC · Fixed Income ---------- */
+{t:"contrast",c:"PC · Fixed-Income Portfolio Mgmt",q:"Cash flow matching vs duration matching for liability-based mandates.",
+ left:{label:"Cash flow matching",points:["Buys high-quality zeros/fixed bonds matching amount and timing of liabilities","Can achieve accounting defeasance — both sides leave the balance sheet"]},
+ right:{label:"Duration matching",points:["Matches interest rate sensitivity rather than individual cash flows","Requires ongoing rebalancing as yields and durations change"]}},
+{t:"qa",c:"PC · Fixed-Income Portfolio Mgmt",q:"What does spread duration measure, and why is 'duration times spread' preferred?",
+ a:"Spread duration gives the approximate % price increase (decrease) for a 1% decrease (increase) in credit spread. Duration times spread modifies it because spread changes across the credit spectrum tend to occur on a proportional percentage basis rather than in absolute basis points."},
+{t:"contrast",c:"PC · Fixed-Income Portfolio Mgmt",q:"Type I vs Type II–IV assets and liabilities.",
+ left:{label:"Type I",points:["Known cash flow amounts and payment dates (e.g. option-free fixed-rate bonds)","Use yield duration statistics: Macaulay, modified, money duration"]},
+ right:{label:"Type II, III, IV",points:["Uncertain amounts and/or uncertain timing","Use curve duration statistics such as effective duration","A model values the portfolio under equal up and down curve shifts"]}},
+{t:"list",c:"PC · Fixed-Income Portfolio Mgmt",q:"The components of expected fixed-income return.",
+ items:["Coupon income","Rolldown return","Expected price change from the investor's views on yields-to-maturity and spreads","Expected currency gains or losses"]},
+{t:"list",c:"PC · Fixed-Income Portfolio Mgmt",q:"Methods for leveraging a fixed-income portfolio.",
+ items:["Futures contracts","Swap agreements","Repurchase agreements","Structured financial instruments","Securities lending"]},
+{t:"list",c:"PC · Fixed-Income Portfolio Mgmt",q:"Advantages of a laddered bond portfolio.",
+ items:["Diversification over the yield curve versus bullet or barbell portfolios","Greater cash flow dispersion, hence increased convexity","Liquidity — always contains a soon-to-mature bond usable as high-quality, low-duration repo collateral"]},
+{t:"qa",c:"PC · Fixed-Income Portfolio Mgmt",q:"What is a total return swap and what are its advantages and drawbacks versus a bond fund?",
+ a:"An OTC derivative transforming an asset or liability from one category to another (e.g. floating MRR cash flows into a bond index total return). Advantages: less initial cash outlay for similar performance, and access to hard-to-reach assets like high-yield and commercial loans. Drawback: counterparty credit risk."},
+
+/* ---------- PC · Alternatives ---------- */
+{t:"list",c:"PC · Alternative Investments",q:"The four roles alternatives typically fulfil in a portfolio.",
+ items:["Capital growth","Income generation","Risk diversification","Safety"]},
+{t:"list",c:"PC · Alternative Investments",q:"Typical risk factors applied to alternative investments.",
+ items:["Equity","Size","Value","Liquidity","Duration","Inflation","Credit spread","Currency"],
+ note:"Benefit: every asset class can be described in one framework. Limits: too many factors is unmanageable, too few is inaccurate, and sensitivities are highly dependent on the look-back period."},
+{t:"qa",c:"PC · Alternative Investments",q:"What investment horizon guideline applies to private real estate, private real assets and private equity?",
+ a:"Investors with less than a 15-year investment horizon should generally avoid these funds."},
+{t:"qa",c:"PC · Alternative Investments",q:"Why are IRRs problematic for comparing private fund managers?",
+ a:"IRRs are highly sensitive to the timing of cash flows into and out of the fund — two managers with similar portfolios can show very different return profiles purely from differing capital call and distribution schedules."},
+{t:"list",c:"PC · Alternative Investments",q:"Key elements to monitor in an alternative investment manager relationship.",
+ items:["Key person risk","Alignment of interests","Style drift","Risk management","Client/asset turnover","Client profile","Service providers"]},
+
+/* ---------- PC · Institutional ---------- */
+{t:"list",c:"PC · Institutional Investors",q:"The four common institutional portfolio management approaches.",
+ items:["Norway model","Endowment model","Canada model","Liability Driven Investing (LDI) model"]},
+{t:"list",c:"PC · Institutional Investors",q:"The key elements in calculating DB plan liabilities.",
+ items:["Service/tenure — more years, higher benefit","Salary/earnings — higher salary, higher benefit","Mortality/longevity — longer life expectancy, higher liability","Vesting — lower turnover means higher vesting and higher liability","Discount rate — a higher rate reduces the present value of liabilities"]},
+{t:"list",c:"PC · Institutional Investors",q:"Drivers of DB plan liquidity needs.",
+ items:["Proportion of active employees to retirees — mature funds need more liquidity","Age of workforce — needs rise as workforce ages","Plan funded status — well-funded plans may cut contributions, needing liquid assets to pay benefits","Flexibility — ability of participants to switch plans or withdraw"]},
+{t:"list",c:"PC · Institutional Investors",q:"The major types of sovereign wealth fund, in order of liquidity need.",
+ items:["Budget stabilization funds — insulate budget from commodity price volatility (highest liquidity need)","Reserve funds — reduce negative carry of FX reserves / earn higher return","Development funds — allocate to priority socioeconomic projects, usually infrastructure","Pension reserve funds — meet identified future pension-related outflows","Savings funds — intergenerational wealth transfer (lowest liquidity need)"]},
+{t:"contrast",c:"PC · Institutional Investors",q:"Endowments vs foundations.",
+ left:{label:"Endowments",points:["Fund a supporting university in perpetuity","More flexible spending rules","Lower liquidity needs","Extra factors: donor fundraising ability, share of operating budget funded, ability to issue debt"]},
+ right:{label:"Foundations",points:["Make grants in perpetuity","Less flexible — US foundations must pay out 5% of assets annually for tax-exempt status","Somewhat higher liquidity needs: pay out slightly more and fund the entire operating budget"]},
+ note:"Both typically target a long-term real return of about 5%, driving heavy allocations to real assets, private classes and hedge funds, with small fixed-income weights."},
+{t:"list",c:"PC · Institutional Investors",q:"How banks and insurers manage the volatility of shareholder capital.",
+ items:["Reducing price volatility of portfolio investments, loans and derivatives","Lowering volatility from unexpected shocks to claims, deposits and guarantees","Limiting leverage","Achieving positive correlation between changes in asset and liability values"]},
+
+/* ---------- PC · Trading costs ---------- */
+{t:"contrast",c:"PC · Trading Costs & E-Markets",q:"Explicit vs implicit transaction costs.",
+ left:{label:"Explicit",points:["Broker commissions","Transaction taxes and stamp duties","Exchange fees"]},
+ right:{label:"Implicit",points:["Bid–ask spread","Market impact","Delay","Unfilled trades"]}},
+{t:"qa",c:"PC · Trading Costs & E-Markets",q:"Define the effective spread, and when is it a poor cost estimate?",
+ a:"Twice the difference between the trade price and the midquote before the trade. It is a poor estimate when large orders are filled in many parts over time, or when small orders receive price improvement."},
+{t:"qa",c:"PC · Trading Costs & E-Markets",q:"Why does VWAP tend to produce lower cost estimates than implementation shortfall?",
+ a:"Because it compares average fill prices to average market prices over a window around the trade, and so often fails to measure the market impact of the order well."},
+{t:"list",c:"PC · Trading Costs & E-Markets",q:"Systemic risks posed by electronic traders.",
+ items:["Runaway algorithms producing unintended order streams from programming mistakes","Fat finger errors — a manual trader submits a larger order than intended","Overlarge orders demanding more liquidity than the market can provide","Malevolent order streams created deliberately to disrupt markets"]},
+{t:"list",c:"PC · Trading Costs & E-Markets",q:"Market manipulation strategies and improper activities.",
+ items:["Bluffing","Squeezing","Cornering","Gunning"],
+ note:"Related improper activities: trading for market impact, rumourmongering, wash trading, and spoofing."},
+
+/* ---------- PM · Performance evaluation ---------- */
+{t:"list",c:"PM · Performance Evaluation",q:"The three components of performance evaluation.",
+ items:["Performance measurement — overall indication of the portfolio's performance","Performance attribution — builds on measurement to explain how performance was achieved","Performance appraisal — uses returns and attribution to infer the quality of the investment process"]},
+{t:"list",c:"PM · Performance Evaluation",q:"Requirements of an effective attribution process.",
+ items:["Reconcile to the total portfolio return/risk","Reflect the investment decision-making process","Quantify the active portfolio management decisions","Provide a complete understanding of the excess return/risk"]},
+{t:"list",c:"PM · Performance Evaluation",q:"The three attribution types by data used.",
+ items:["Returns-based — uses returns to identify the factors generating them","Holdings-based — uses holdings over time to evaluate contributing decisions","Transactions-based — uses both holdings and transactions to fully explain performance"]},
+{t:"list",c:"PM · Performance Evaluation",q:"The seven properties of a valid benchmark.",
+ items:["Unambiguous","Investable","Measurable","Appropriate","Reflective of current investment opinions","Specified in advance","Accountable"]},
+{t:"list",c:"PM · Performance Evaluation",q:"Investment performance appraisal ratios used to measure skill.",
+ items:["Sortino ratio","Upside/downside capture ratios","Maximum drawdown","Drawdown duration"],
+ note:"Use with care — each has assumptions, and they rest on return data that is often limited and error-prone."},
+
+/* ---------- PM · Manager selection ---------- */
+{t:"contrast",c:"PM · Investment Manager Selection",q:"Type I vs Type II error in manager selection.",
+ left:{label:"Type I error",points:["Hiring or retaining a manager who subsequently underperforms","Rejecting the null hypothesis of no skill when it is correct"]},
+ right:{label:"Type II error",points:["Not hiring, or firing, a manager who subsequently outperforms or meets expectations","Failing to reject the null hypothesis when it is incorrect"]}},
+{t:"contrast",c:"PM · Investment Manager Selection",q:"Investment due diligence vs operational due diligence.",
+ left:{label:"Investment DD",points:["Evaluates the manager's investment process","Investment personnel","Portfolio construction"]},
+ right:{label:"Operational DD",points:["Evaluates the manager's infrastructure","Back office, controls, service providers"]}},
+{t:"contrast",c:"PM · Investment Manager Selection",q:"Returns-based (RBSA) vs holdings-based (HBSA) style analysis.",
+ left:{label:"RBSA — top down",points:["Estimates risk exposures from an actual return series","Straightforward, comparable across managers and time","Works even for complicated strategies","Imprecise — assumes an unchanging average portfolio that may not reflect current exposures"]},
+ right:{label:"HBSA — bottom up",points:["Estimates exposures from securities actually held at a point in time","Gives current risk factors and an accurate view of exposures","More computational effort","Depends on manager transparency; vulnerable to stale pricing and window dressing"]}},
+{t:"contrast",c:"PM · Investment Manager Selection",q:"Effect of management fees vs performance fees on realised results.",
+ left:{label:"Management fee",points:["Lowers the level of realised return","Does not affect standard deviation"]},
+ right:{label:"Performance fee",points:["Lowers realised return","Also lowers realised standard deviation","Preference is for more linear compensation, to reduce incentives to shift risk at inflection points"]}},
+
+/* ---------- PM · GIPS ---------- */
+{t:"list",c:"PM · GIPS Standards",q:"The five objectives of the GIPS standards.",
+ items:["Promote investor interests and instil investor confidence","Ensure accurate and consistent data","Obtain worldwide acceptance of a single standard for calculating and presenting performance","Promote fair, global competition among investment firms","Promote industry self-regulation on a global basis"]},
+{t:"list",c:"PM · GIPS Standards",q:"Conditions allowing money-weighted returns instead of time-weighted returns.",
+ items:["The firm must control the external cash flows into the portfolios/pooled fund","AND at least one of: closed-end","fixed life","fixed commitment","illiquid investments a significant part of the strategy"]},
+{t:"list",c:"PM · GIPS Standards",q:"The GIPS fair value hierarchy, in order.",
+ items:["Objective, observable, unadjusted quoted prices for identical investments in active markets","Quoted prices for similar investments in active markets","Quoted prices for identical or similar investments in markets that are not active","Market-based inputs other than quoted prices that are observable","Subjective, unobservable inputs"]},
+{t:"list",c:"PM · GIPS Standards",q:"Key items required in a GIPS Composite Report presenting time-weighted returns.",
+ items:["At least 5 years of annual performance, building to a minimum of 10 years","Composite and benchmark annual returns for all years","Number of portfolios (if six or more) at each period end","Amount of assets in the composite","Total firm assets at the end of each period","A measure of internal dispersion of individual portfolio returns","3-year annualised ex post standard deviation of composite and benchmark"]},
+{t:"list",c:"PM · GIPS Standards",q:"Conditions for linking performance from a past firm or affiliation.",
+ items:["Substantially all investment decision makers are employed by the new/acquiring firm","The decision-making process remains substantially intact and independent","The new firm has records documenting and supporting the reported performance","There is no break in the track record between the two firms"]},
+{t:"qa",c:"PM · GIPS Standards",q:"Three quick GIPS calculation rules that are easy to trip on.",
+ a:"Returns for periods of less than one year must not be annualised. Returns from cash and cash equivalents must be included in all total return calculations. Returns must be calculated after the deduction of transaction costs. Also: firms may not link simulated/model performance with actual performance, and a verification report may only be issued for the whole firm."},
+
+/* ---------- DRV · Options ---------- */
+{t:"contrast",c:"DRV · Options Strategies",q:"Synthetic long vs synthetic short forward positions.",
+ left:{label:"Synthetic long",points:["Buy a call AND write a put","Same underlying, same strike, same expiration"]},
+ right:{label:"Synthetic short",points:["Write a call AND buy a put","Same underlying, same strike, same expiration"]},
+ note:"Synthetic long put = short stock + long call (call strike = short price). Synthetic long call = long stock + long put (put strike = purchase price)."},
+{t:"list",c:"DRV · Options Strategies",q:"The four Greeks and what each measures.",
+ items:["Delta — change in option price for a change in the underlying's price","Gamma — change in the option's delta for a change in the underlying's price","Vega — change in option price for a change in volatility of the underlying","Theta — the daily change in an option's price, all else equal"]},
+{t:"contrast",c:"DRV · Options Strategies",q:"Covered call vs protective put.",
+ left:{label:"Covered call",points:["Hold stock, write a call against it","Enhances yield or exits at a target price","Max return limited — right tail transferred to the buyer","Max loss lower than shares alone, but opportunity loss if shares rally hard"]},
+ right:{label:"Protective put",points:["Hold stock, buy a put on the same asset","Insurance against a price decline","Max loss limited — downside transferred to the writer for a premium","Continuous purchase preserves upside but can be expensive"]}},
+{t:"contrast",c:"DRV · Options Strategies",q:"Bull spread vs bear spread construction.",
+ left:{label:"Bull spread",points:["Buy a call, write another call with a HIGHER exercise price","Same underlying and expiry","Bullish view"]},
+ right:{label:"Bear spread",points:["Buy a put, write another put with a LOWER exercise price","Same underlying and expiry","Bearish view"]},
+ note:"For both, maximum gain and maximum loss are known and limited."},
+{t:"qa",c:"DRV · Options Strategies",q:"Describe a collar and the trade-off it makes.",
+ a:"Long stock, plus write a call struck above the current price and buy a put struck below it. It limits the range of outcomes — sacrificing upside gain in exchange for downside protection."},
+{t:"contrast",c:"DRV · Options Strategies",q:"Long straddle vs long calendar spread — what view does each express?",
+ left:{label:"Long straddle",points:["Buy puts and calls, same exercise price and expiry","Expects increased volatility","Needs a large price move to profit"]},
+ right:{label:"Long calendar spread",points:["Buy a long-dated option, write a shorter-dated option of the same type and strike","Outlook flat in the near term, greater movement expected later"]}},
+{t:"contrast",c:"DRV · Options Strategies",q:"Volatility smile vs volatility skew.",
+ left:{label:"Smile",points:["Implied volatilities of OTM options exceed those of ATM options","Roughly symmetric shape"]},
+ right:{label:"Skew (more common)",points:["Implied volatility increases for OTM puts","Decreases for OTM calls as strike moves away from spot"]},
+ note:"The implied volatility surface is a 3-D plot of expiry, strike and implied volatility — showing skew and the term structure of volatility at once."},
+
+/* ---------- DRV · Swaps/futures ---------- */
+{t:"qa",c:"DRV · Swaps, Forwards & Futures",q:"What is needed to hedge interest rate risk with bond futures?",
+ a:"The basis point value (BPV) of the portfolio to be hedged, the target BPV, and the BPV of the futures — which itself derives from the BPV of the cheapest-to-deliver bond and its conversion factor. The number of contracts follows from the BPV hedge ratio."},
+{t:"list",c:"DRV · Swaps, Forwards & Futures",q:"The three main types of equity swap.",
+ items:["Receive equity return, pay fixed","Receive equity return, pay floating","Receive equity return, pay another equity return"],
+ note:"A total return swap is a modified equity swap that also includes dividends paid by the underlying until swap maturity."},
+{t:"qa",c:"DRV · Swaps, Forwards & Futures",q:"What is cash equitization?",
+ a:"A strategy to boost returns by 'equitizing' unintended cash holdings, typically using stock index futures and interest rate futures."},
+{t:"qa",c:"DRV · Swaps, Forwards & Futures",q:"How does a variance swap pay off, and what view does it express?",
+ a:"The buyer receives the difference between realised annualised variance and the fixed variance strike, applied to a variance notional. It allows directional bets on implied versus realised volatility."},
+
+/* ---------- DRV · Currency ---------- */
+{t:"qa",c:"DRV · Currency Management",q:"What is an FX swap and what is it commonly used for?",
+ a:"A simultaneous spot and forward transaction — one leg buys the base currency and the other sells it. Commonly used to renew maturing forward contracts, i.e. to roll them forward."},
+{t:"list",c:"DRV · Currency Management",q:"The currency management spectrum, from passive to most active.",
+ items:["Passive, rules-based, complete hedging of currency exposures","Discretionary hedging — some latitude for the manager","Active currency management — seeks out currency risk to manage it for profit","Currency overlay programmes — aggressively manage currency alpha"]},
+{t:"list",c:"DRV · Currency Management",q:"Methods for forming market views on currencies.",
+ items:["Macroeconomic fundamentals — estimate 'fair value', expecting spot to converge on it","Technical market indicators — historical price patterns, support/resistance, trend confirmation","Carry trade — sell low-yield, buy high-yield currencies, exploiting violations of uncovered interest rate parity","Volatility trading — uses options to express views on the distribution of future rates, not their level"]},
+{t:"qa",c:"DRV · Currency Management",q:"Why do passive hedgers prefer forwards over futures, and what is the catch?",
+ a:"Forwards are more flexible (futures suit smaller sizes and are common in private wealth management). The catch: forwards carry the possibility of negative roll yield, as embedded forward points can work for or against the hedge."},
+{t:"qa",c:"DRV · Currency Management",q:"What is basis risk in a cross hedge?",
+ a:"The risk that the correlation between the exposure and its cross-hedging instrument changes in unexpected ways. Forward contracts typically have very little basis risk relative to movements in the underlying spot rate."},
+
+/* ---------- PMP · Index-based equity ---------- */
+{t:"list",c:"PMP · Index-Based Equity",q:"The principal sources of index-based portfolio tracking error.",
+ items:["Fees","Trading costs","Cash drag — dilution of equity return from cash held, worsened by delays converting dividends into shares"],
+ note:"Managers control it by minimising trading costs, netting inflows against redemptions, and equitizing cash with derivatives."},
+{t:"list",c:"PMP · Index-Based Equity",q:"The three construction methods for an index-based portfolio.",
+ items:["Full replication — hold all constituents; needs scale and high-quality data; lowest tracking error","Sampling — hold a subset to keep trading costs low","Optimisation — match index characteristics and performance as closely as possible"]},
+
+/* ---------- PMP · Active equity ---------- */
+{t:"contrast",c:"PMP · Active Equity: Strategies",q:"Fundamental vs quantitative active equity approaches.",
+ left:{label:"Fundamental (discretionary)",points:["Subjective decision process","Forecasts stock returns","Uses research","Depth of analysis","Forward looking","Risk handled by judgment"]},
+ right:{label:"Quantitative (systematic)",points:["Objective, rules-based process","Forecasts factor returns","Uses data","Breadth of analysis","Backward looking","Risk handled by optimisation techniques"]}},
+{t:"list",c:"PMP · Active Equity: Strategies",q:"The main types of active equity management strategy.",
+ items:["Bottom-up — company and industry analysis to assess intrinsic value; split into value-based and growth-based","Top-down — macro environment, demographics and policy; used for country allocation, sector rotation, style rotation, volatility and thematic strategies","Factor-based — identify significant factors driving prices and tilt toward them","Activist — take meaningful stakes and influence management, strategy or capital structure"]},
+{t:"list",c:"PMP · Active Equity: Strategies",q:"The steps in the fundamental active investment process.",
+ items:["Define the investment universe","Prescreen the universe","Understand the industry and business","Forecast the company's financial performance","Convert forecasts into a target price","Construct the portfolio with the desired risk profile","Rebalance according to a buy and sell discipline"]},
+{t:"contrast",c:"PMP · Active Equity: Strategies",q:"Pitfalls in fundamental vs quantitative investing.",
+ left:{label:"Fundamental",points:["Behavioural biases — confirmation, illusion of control, availability, loss aversion, overconfidence, regret aversion","The value trap","The growth trap"]},
+ right:{label:"Quantitative",points:["Look-ahead and survivorship biases","Overfitting and data mining","Unrealistic turnover assumptions","Transaction costs","Short availability"]}},
+{t:"list",c:"PMP · Active Equity: Portfolio Construction",q:"The four building blocks of portfolio construction.",
+ items:["Overweight, underweight or neutralise rewarded factors — Market, Size, Value, Momentum","Alpha skills — timing factors, securities and markets; finding and enhancing factors","Position sizing — accounting for risk and active weights","Breadth of expertise — performance from a larger sample of independent (uncorrelated) decisions"]},
+{t:"contrast",c:"PMP · Active Equity: Portfolio Construction",q:"Active risk vs absolute risk.",
+ left:{label:"Active risk (tracking error)",points:["Function of exposure to systematic risks plus idiosyncratic security-specific risk","The relevant measure for benchmark-relative portfolios"]},
+ right:{label:"Absolute risk",points:["Total volatility of portfolio returns, independent of any benchmark","The right measure for portfolios with an absolute return objective"]},
+ note:"Active Share measures how far position number and sizing differ from the benchmark. Benchmark-agnostic managers usually show higher Active Share and higher active risk."},
+{t:"list",c:"PMP · Active Equity: Portfolio Construction",q:"Formal (statistical) risk measures used in risk constraints.",
+ items:["Volatility — standard deviation of portfolio returns","Active risk / tracking error","Skewness — degree of non-normality in return expectations","Drawdown — loss from a high point until recovery begins","VaR — minimum loss expected a given % of the time","CVaR (expected shortfall) — average loss if the VaR cutoff is exceeded","IVaR — change in portfolio VaR from adding a new position","MVaR — effect on portfolio risk of a change in position size"]},
+{t:"list",c:"PMP · Active Equity: Portfolio Construction",q:"What a well-constructed portfolio exhibits.",
+ items:["A clear investment philosophy and a consistent investment process","Risk and structural characteristics as promised to investors","A risk-efficient delivery methodology","Reasonably low operating costs"]},
+
+/* ---------- PMP · LDI ---------- */
+{t:"qa",c:"PMP · Liability-Driven & Index FI",q:"How is immunisation achieved for a single liability, and what is the risk?",
+ a:"Match the Macaulay duration of the bond portfolio to the horizon date, rebalancing as yields and durations change (via bonds or interest rate derivatives). It aims to lock in the portfolio's cash flow yield — the IRR of the cash flows, not the weighted average YTM. The risk is that as the curve shifts and twists, the change in cash flow yield doesn't match that on the zero-coupon bond providing perfect immunisation."},
+{t:"list",c:"PMP · Liability-Driven & Index FI",q:"The three conditions to immunise multiple liabilities.",
+ items:["Market value of assets ≥ market value of liabilities","Asset basis point value (BPV) equals liability BPV","Dispersion of cash flows and convexity of assets exceed those of the liabilities"]},
+{t:"qa",c:"PMP · Liability-Driven & Index FI",q:"How many futures contracts are needed to immunise, and which direction?",
+ a:"(Liability BPV − Asset BPV) ÷ Futures BPV. A positive result means buy (go long) futures; negative means sell (go short). Futures BPV ≈ BPV of the cheapest-to-deliver security ÷ its conversion factor."},
+{t:"contrast",c:"PMP · Liability-Driven & Index FI",q:"ABO vs PBO as pension liability measures.",
+ left:{label:"ABO",points:["Accumulated Benefit Obligation","Based on current wages"]},
+ right:{label:"PBO",points:["Projected Benefit Obligation","Based on expected future wages"]},
+ note:"For each measure a model extracts effective duration and BPV. Model risk arises from the many assumptions involved."},
+{t:"list",c:"PMP · Liability-Driven & Index FI",q:"The three hedging tools for a pension duration gap, and when each is favoured.",
+ items:["Receive-fixed interest rate swap — preferred if rates are expected to stay low","Purchased receiver swaption — attractive if rates are expected to rise","Swaption collar (buy receiver, write payer) — favoured if rates are projected to reach a threshold depending on option costs and strike rates"],
+ note:"Hedging ratio = % of the duration gap closed with derivatives; 0% is no hedging, 100% is full immunisation. Strategic hedging is active management of that ratio."},
+{t:"qa",c:"PMP · Liability-Driven & Index FI",q:"What is contingent immunisation?",
+ a:"Adding active management of the surplus (assets minus liabilities) to reduce the overall cost of retiring the liabilities. Any asset class can be used, and the entity may deliberately over-hedge or under-hedge relative to passive immunisation."},
+{t:"list",c:"PMP · Liability-Driven & Index FI",q:"The primary risk factors when tracking a bond index.",
+ items:["Duration","Convexity","Key rate durations","Portfolio weights by sector, credit quality, maturity, coupon rate and issuer"],
+ note:"Matrix pricing estimates fair value of illiquid corporate bonds from comparable securities. Enhanced indexing (buying a subset) introduces tracking risk."},
+
+/* ---------- PMP · Yield curve ---------- */
+{t:"list",c:"PMP · Yield Curve Strategies",q:"The primary yield curve risk factors.",
+ items:["Level — parallel shifts up or down","Slope — difference between long-maturity and shorter-maturity yields","Shape or curvature — relationship between short, intermediate and long yields"]},
+{t:"contrast",c:"PMP · Yield Curve Strategies",q:"Steepener vs flattener construction.",
+ left:{label:"Steepener",points:["Long short-dated bonds, short long-dated bonds","Gains from a wider spread between short and long yields"]},
+ right:{label:"Flattener",points:["Sell short-term bonds, buy long-term bonds","Gains from a narrowing spread"]},
+ note:"Either may be duration neutral, net long or net short duration, depending on the manager's view of how the slope change splits between short and long yields."},
+{t:"qa",c:"PMP · Yield Curve Strategies",q:"Compare barbell and bullet portfolios, and describe the butterfly.",
+ a:"For a given duration, a barbell (short plus long positions) has greater convexity than a bullet (concentrated in a single maturity). The butterfly combines a long bullet with a short barbell, or vice versa, to capitalise on expected changes in curve shape."},
+{t:"list",c:"PMP · Yield Curve Strategies",q:"Ways to earn excess return in a static, upward-sloping curve environment.",
+ items:["Buy-and-hold strategy to increase duration","Roll down the yield curve","Use leverage via a carry trade in cash markets"]},
+{t:"contrast",c:"PMP · Yield Curve Strategies",q:"Covered vs uncovered interest rate parity.",
+ left:{label:"Covered",points:["Uses a forward contract to lock in domestic currency proceeds","No exchange rate uncertainty remains"]},
+ right:{label:"Uncovered",points:["Suggests that over time, returns on unhedged foreign currency exposure equal those on a domestic investment","Empirically violated — hence the profitability of carry trades"]},
+ note:"Under interest rate parity, the higher-yielding currency trades at a forward discount and the lower-yielding currency at a forward premium."},
+
+/* ---------- PMP · Credit ---------- */
+{t:"contrast",c:"PMP · Credit Strategies",q:"Bottom-up vs top-down credit strategies.",
+ left:{label:"Bottom-up",points:["Financial ratio analysis","Reduced-form credit models such as the Z-score model","Structural credit models (e.g. Bloomberg DRSK)"]},
+ right:{label:"Top-down",points:["Based on macro factors","Groups investment choices by credit rating and industry sector"]}},
+{t:"qa",c:"PMP · Credit Strategies",q:"What are the two key components of a bond's credit risk, and how does the credit cycle affect them?",
+ a:"POD (probability of default) and LGD (loss given default). Credit spread changes are driven by the credit cycle — the expansion and contraction of credit over the business cycle. High-yield issuers see far greater POD swings than investment-grade, with distressed bond prices approaching the recovery rate."},
+{t:"qa",c:"PMP · Credit Strategies",q:"What does credit curve steepening versus flattening signal?",
+ a:"Steepening usually indicates low near-term default expectations and higher growth expectations. Flattening or inversion suggests rising default expectations and lower future growth."},
+{t:"qa",c:"PMP · Credit Strategies",q:"Why is liquidity risk higher in credit markets than equities, and how is it managed?",
+ a:"Because of market structure differences — bilateral, dealer-centric trading. Managed by using liquid bonds for short-term tactical positioning, less liquid positions for buy-and-hold, and liquid alternatives where active management adds little value. Tail risk is quantified with VaR or expected shortfall and managed with position limits, risk budgeting or derivatives."},
+
+/* ---------- PMP · Trade strategy ---------- */
+{t:"list",c:"PMP · Trade Strategy & Execution",q:"The four categories of input affecting trade strategy selection.",
+ items:["Order related — side/direction and size, e.g. percentage of average daily volume","Security related — type, short-term trade alpha, price volatility, liquidity profile","Market related — intraday volumes, bid–ask spreads, security and market volatility","User based — the manager's risk aversion and urgency"]},
+{t:"contrast",c:"PMP · Trade Strategy & Execution",q:"Market impact vs execution risk.",
+ left:{label:"Market impact",points:["Adverse price impact caused by trading the order itself","One of the largest costs in trading"]},
+ right:{label:"Execution risk",points:["Adverse price impact from a change in the security's fundamental value","Often proxied by price volatility"]}},
+{t:"list",c:"PMP · Trade Strategy & Execution",q:"The three components of implementation shortfall attribution.",
+ items:["Delay cost — from not submitting the order at the time of the investment decision","Execution cost — from the manager's own buying/selling pressure and market risk","Opportunity cost — from failing to execute all shares due to adverse price moves or insufficient liquidity"]},
+{t:"list",c:"PMP · Trade Strategy & Execution",q:"Reference price benchmarks and who uses each.",
+ items:["Pre-trade (e.g. arrival price) — short-term alpha managers wanting to transact near current prices, greater urgency","Intraday (VWAP, TWAP) — managers without short-term price views who want to participate in volume","Post-trade (closing price) — index funds and funds valued at closing prices, minimising tracking error","Price target benchmarks"]},
+{t:"list",c:"PMP · Trade Strategy & Execution",q:"The types of execution algorithm.",
+ items:["Scheduled","Liquidity seeking","Arrival price","Dark aggregators","Smart order routers"]},
+{t:"list",c:"PMP · Trade Strategy & Execution",q:"Key aspects a trade policy document must incorporate.",
+ items:["The meaning of best execution","Factors determining the optimal order execution approach","Handling of trading errors","Listing of eligible brokers and execution venues","A process to monitor execution arrangements"]},
+];
+
+/* ============================================================
+   STATE
+   ============================================================ */
+const KEY='cfa_l3_state_v1';
+const SPRINT_SIZE=5;
+let store={seen:{},hits:{},misses:{}};   // keyed by card index
+let view='home';
+let sprint=[], sprintPos=0, revealed=0, sprintLog=[];
+const app=document.getElementById('app');
+const CATS=[...new Set(CARDS.map(c=>c.c))];
+
+/* ---- storage adapter: artifact store → device store → memory ---- */
+let MODE='memory';   // 'cloud' | 'device' | 'memory'
+const MODE_LABEL={
+  cloud:'Syncing to your Claude account',
+  device:'Saving on this device only',
+  memory:'Not saving — progress lost on close'
+};
+
+function hydrate(raw){
+  if(!raw) return false;
+  try{const p=JSON.parse(raw);
+    store={seen:p.seen||{},hits:p.hits||{},misses:p.misses||{}};
+    return true;
+  }catch(e){return false;}
+}
+
+async function probeCloud(){
+  if(typeof window.storage==='undefined'||!window.storage) return false;
+  try{
+    // a real round-trip is the only reliable test
+    const probe='__probe_'+Date.now();
+    const w=await window.storage.set(probe,'1',false);
+    if(!w||typeof w!=='object') return false;
+    try{await window.storage.delete(probe,false);}catch(e){}
+    return true;
+  }catch(e){return false;}
+}
+function probeDevice(){
+  try{
+    localStorage.setItem('__probe','1');
+    localStorage.removeItem('__probe');
+    return true;
+  }catch(e){return false;}
+}
+
+async function load(){
+  if(await probeCloud()){
+    MODE='cloud';
+    try{const r=await window.storage.get(KEY,false); if(r&&r.value) hydrate(r.value);}catch(e){}
+    return;
+  }
+  if(probeDevice()){
+    MODE='device';
+    hydrate(localStorage.getItem(KEY));
+    return;
+  }
+  MODE='memory';
+}
+
+async function save(){
+  const payload=JSON.stringify(store);
+  if(MODE==='cloud'){
+    try{
+      const r=await window.storage.set(KEY,payload,false);
+      if(r&&typeof r==='object') return;
+      throw new Error('bad response');
+    }catch(e){
+      // cloud died mid-session — drop down a tier rather than lose the session
+      MODE=probeDevice()?'device':'memory';
+    }
+  }
+  if(MODE==='device'){
+    try{localStorage.setItem(KEY,payload);}catch(e){MODE='memory';}
+  }
+}
+
+/* card strength: 0 (never seen / always missed) .. 1 (reliably known) */
+function strength(i){
+  const h=store.hits[i]||0, m=store.misses[i]||0;
+  if(h+m===0) return 0;
+  return h/(h+m);
+}
+function catStats(cat){
+  const idx=CARDS.map((c,i)=>[c,i]).filter(([c])=>c.c===cat).map(([,i])=>i);
+  const seen=idx.filter(i=>store.seen[i]).length;
+  const score=idx.reduce((s,i)=>s+strength(i),0)/idx.length;
+  return {idx,total:idx.length,seen,score};
+}
+function totals(){
+  const all=CARDS.map((_,i)=>i);
+  return {
+    total:CARDS.length,
+    seen:all.filter(i=>store.seen[i]).length,
+    solid:all.filter(i=>strength(i)>=0.67&&store.seen[i]).length,
+    shaky:all.filter(i=>store.seen[i]&&strength(i)<0.67).length
+  };
+}
+
+/* weakest-topic-first selection */
+function buildSprint(forcedCat){
+  let cat=forcedCat;
+  if(!cat){
+    // rank categories: unseen coverage first, then low strength
+    const ranked=CATS.map(c=>{
+      const s=catStats(c);
+      const coverage=s.seen/s.total;
+      return {c, key: s.score*0.65 + coverage*0.35};
+    }).sort((a,b)=>a.key-b.key);
+    cat=ranked[0].c;
+  }
+  const s=catStats(cat);
+  // within the category: unseen first, then weakest, then least recently correct
+  const pool=[...s.idx].sort((a,b)=>{
+    const sa=store.seen[a]?1:0, sb=store.seen[b]?1:0;
+    if(sa!==sb) return sa-sb;
+    return strength(a)-strength(b);
+  });
+  let picked=pool.slice(0,SPRINT_SIZE);
+  if(picked.length<SPRINT_SIZE){
+    const rest=CARDS.map((_,i)=>i).filter(i=>!picked.includes(i))
+      .sort((a,b)=>strength(a)-strength(b));
+    picked=picked.concat(rest.slice(0,SPRINT_SIZE-picked.length));
+  }
+  sprint=picked; sprintPos=0; revealed=0; sprintLog=[];
+  view='sprint'; render();
+}
+
+function grade(ok){
+  const i=sprint[sprintPos];
+  store.seen[i]=true;
+  if(ok) store.hits[i]=(store.hits[i]||0)+1;
+  else   store.misses[i]=(store.misses[i]||0)+1;
+  sprintLog.push({i,ok});
+  save();
+  if(sprintPos<sprint.length-1){sprintPos++;revealed=0;}
+  else{view='done';}
+  render();
+}
+
+/* ============================================================
+   RENDER
+   ============================================================ */
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
+
+function renderHome(){
+  const t=totals();
+  const ranked=CATS.map(c=>({c,...catStats(c)}))
+    .sort((a,b)=>(a.score*0.65+(a.seen/a.total)*0.35)-(b.score*0.65+(b.seen/b.total)*0.35));
+  const weakest=ranked[0];
+
+  app.innerHTML=`
+  <div class="topbar">
+    <div><h1>CFA L3 Sprints</h1><div class="sub">${CARDS.length} cards · ${CATS.length} topics</div></div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow">Next up · weakest topic</div>
+    <h2>${esc(weakest.c)}</h2>
+    <p>${weakest.seen}/${weakest.total} cards attempted${weakest.seen?` · ${Math.round(weakest.score*100)}% recall`:''}. Five cards, about 90 seconds.</p>
+    <button class="big-btn" id="go">Start sprint →</button>
+    <button class="big-btn secondary" id="goRandom">Sprint a random topic</button>
+  </div>
+
+  <div class="stat-row">
+    <div class="stat tot"><b>${t.seen}</b><span>Attempted</span></div>
+    <div class="stat ok"><b>${t.solid}</b><span>Solid</span></div>
+    <div class="stat warn"><b>${t.shaky}</b><span>Shaky</span></div>
+  </div>
+
+  <div class="section-label">Topic strength — weakest first</div>
+  <div id="topics">
+  ${ranked.map(r=>{
+    const pct=r.seen?Math.round(r.score*100):null;
+    const cls=pct===null?'weak':(pct>=75?'':(pct>=50?'mid':'weak'));
+    const w=pct===null?0:pct;
+    return `<div class="topic" data-cat="${esc(r.c)}">
+      <div class="topic-head">
+        <span class="topic-name">${esc(r.c)}</span>
+        <span class="topic-pct">${pct===null?'not started':pct+'%'} · ${r.seen}/${r.total}</span>
+      </div>
+      <div class="bar ${cls}"><i style="width:${w}%"></i></div>
+    </div>`;}).join('')}
+  </div>
+  <div class="muted-note">
+    <span style="color:${MODE==='memory'?'#ff6b6b':(MODE==='device'?'#ffb454':'#3ddc97')}">●</span>
+    ${MODE_LABEL[MODE]}. Cards you miss resurface sooner.
+  </div>
+  <div style="height:24px"></div>`;
+
+  document.getElementById('go').onclick=()=>buildSprint(weakest.c);
+  document.getElementById('goRandom').onclick=()=>buildSprint(CATS[Math.floor(Math.random()*CATS.length)]);
+  document.querySelectorAll('.topic').forEach(el=>{
+    el.onclick=()=>buildSprint(el.dataset.cat);
+  });
+}
+
+function renderSprint(){
+  const card=CARDS[sprint[sprintPos]];
+  const dots=sprint.map((_,k)=>`<div class="dot ${k<sprintPos?'done':(k===sprintPos?'active':'')}"></div>`).join('');
+  let body='', controls='';
+
+  if(card.t==='qa'){
+    body=`<div class="panel">
+      <div class="cat-tag">${esc(card.c)}</div>
+      <p class="prompt">${esc(card.q)}</p>
+      ${revealed?`<div class="answer">${esc(card.a)}</div>`:`<div class="tap-hint">recall it, then reveal</div>`}
+    </div>`;
+    controls=revealed?gradeRow():`<button class="reveal-btn" id="rev">Reveal answer</button>`;
+  }
+
+  if(card.t==='list'){
+    const n=card.items.length;
+    body=`<div class="panel">
+      <div class="cat-tag">${esc(card.c)}</div>
+      <p class="prompt small">${esc(card.q)}</p>
+      <div class="list-meta">${revealed} of ${n} revealed — how many did you get?</div>
+      ${card.items.map((it,k)=>`
+        <div class="slot ${k<revealed?'open':''}">
+          <div class="slot-num">${k+1}</div>
+          <div class="slot-text ${k<revealed?'':'hidden'}">${k<revealed?esc(it):'—'}</div>
+        </div>`).join('')}
+      ${revealed>=n&&card.note?`<div class="answer">${esc(card.note)}</div>`:''}
+    </div>`;
+    controls = revealed<n
+      ? `<button class="reveal-btn" id="rev">Reveal next (${revealed+1}/${n})</button>`
+      : gradeRow();
+  }
+
+  if(card.t==='contrast'){
+    const L=revealed>=1, R=revealed>=2;
+    body=`<div class="panel">
+      <div class="cat-tag">${esc(card.c)}</div>
+      <p class="prompt small">${esc(card.q)}</p>
+      <div class="col" id="colL">
+        <div class="col-label">${esc(card.left.label)}</div>
+        ${L?`<ul>${card.left.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`
+           :`<div class="col-tap">tap to reveal</div>`}
+      </div>
+      <div class="col" id="colR">
+        <div class="col-label">${esc(card.right.label)}</div>
+        ${R?`<ul>${card.right.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul>`
+           :`<div class="col-tap">tap to reveal</div>`}
+      </div>
+      ${L&&R&&card.note?`<div class="answer">${esc(card.note)}</div>`:''}
+    </div>`;
+    controls = (L&&R) ? gradeRow() : `<div class="tap-hint">reveal each side once you've recalled it</div>`;
+  }
+
+  app.innerHTML=`
+  <div class="sprint-head">
+    <div class="dots">${dots}</div>
+    <button class="close-x" id="quit">✕</button>
+  </div>
+  <div class="card-area">${body}${controls}</div>`;
+
+  document.getElementById('quit').onclick=()=>{view='home';render();};
+  const rev=document.getElementById('rev');
+  if(rev) rev.onclick=()=>{revealed++;render();};
+  const cl=document.getElementById('colL'), cr=document.getElementById('colR');
+  if(cl) cl.onclick=()=>{if(revealed<1){revealed=1;render();}};
+  if(cr) cr.onclick=()=>{if(revealed<2){revealed=revealed<1?1:2;render();}};
+  const gm=document.getElementById('gMiss'), gg=document.getElementById('gGot');
+  if(gm) gm.onclick=()=>grade(false);
+  if(gg) gg.onclick=()=>grade(true);
+}
+function gradeRow(){
+  return `<div class="grade-row">
+    <button class="grade miss" id="gMiss">Didn't have it</button>
+    <button class="grade got" id="gGot">Had it</button>
+  </div>`;
+}
+
+function renderDone(){
+  const got=sprintLog.filter(x=>x.ok).length;
+  const t=totals();
+  app.innerHTML=`
+  <div class="done-wrap">
+    <div class="done-mark">${got===SPRINT_SIZE?'🎯':(got>=3?'👍':'📌')}</div>
+    <h2>${got} of ${sprintLog.length}</h2>
+    <p>${got===sprintLog.length?'Clean sweep. That topic is holding.':
+        got>=3?'Solid session. The misses will come back around sooner.':
+        'Worth another pass at this topic shortly.'}</p>
+    <div class="recap">
+      ${sprintLog.map(x=>`<div class="recap-item">${x.ok?'✓':'✗'} <b>${esc(CARDS[x.i].q.slice(0,74))}${CARDS[x.i].q.length>74?'…':''}</b></div>`).join('')}
+    </div>
+    <button class="big-btn" id="again" style="margin-top:18px">Another sprint →</button>
+    <button class="big-btn secondary" id="home">Back to topics</button>
+    <div class="muted-note">${t.seen}/${t.total} cards attempted overall</div>
+  </div>`;
+  document.getElementById('again').onclick=()=>buildSprint();
+  document.getElementById('home').onclick=()=>{view='home';render();};
+}
+
+function render(){
+  if(view==='home') renderHome();
+  else if(view==='sprint') renderSprint();
+  else renderDone();
+  window.scrollTo(0,0);
+}
+
+(async function init(){ await load(); render(); })();
+</script>
+</body>
+</html>

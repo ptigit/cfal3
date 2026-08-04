@@ -124,6 +124,35 @@ body{
 
 .muted-note{font-size:.72rem;color:var(--faint);text-align:center;margin-top:16px;line-height:1.5}
 .hidden-el{display:none}
+
+/* mode switcher */
+.modebar{display:flex;gap:6px;background:var(--surface);border:1px solid var(--line);
+  border-radius:13px;padding:4px;margin-top:4px}
+.mode{flex:1;background:none;border:none;color:var(--dim);border-radius:10px;
+  padding:9px 4px;font-size:.78rem;font-weight:600;cursor:pointer}
+.mode.on{background:var(--surface-2);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+/* formula display */
+.f-ask{font-size:.66rem;text-transform:uppercase;letter-spacing:.7px;
+  color:var(--accent-2);font-weight:700;margin-bottom:6px}
+.f-box{
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:.9rem;line-height:1.65;
+  background:rgba(107,138,253,.08);
+  border:1px solid rgba(107,138,253,.22);
+  border-radius:12px;padding:13px 14px;margin-top:12px;
+  white-space:pre-wrap;overflow-x:auto;color:#dce4ff;
+}
+
+/* reference view */
+.search{width:100%;padding:12px 13px;border-radius:13px;background:var(--surface);
+  color:var(--ink);border:1px solid var(--line);font-size:.9rem;margin-top:4px}
+.search::placeholder{color:var(--faint)}
+.ref-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:13px;margin-bottom:8px}
+.ref-name{font-size:.85rem;font-weight:650;color:var(--ink)}
+.ref-card .f-box{margin-top:9px;font-size:.85rem}
+.ref-d{font-size:.79rem;line-height:1.5;color:var(--dim);margin-top:9px}
 </style>
 </head>
 <body>
@@ -482,13 +511,174 @@ const CARDS = [
 ];
 
 /* ============================================================
+   FORMULA BANK — 113 formulas, filed into the same taxonomy
+   shape: {c:category, n:name, f:formula, d:terms & notes}
+   ============================================================ */
+const FORMULAS=[
+/* --- Index-based equity --- */
+{c:"PMP · Index-Based Equity",n:"Tracking error decomposition",f:"TE² = TE²_factor + TE²_specific",d:"Factor TE comes from active factor exposures × the factor covariance matrix; specific TE from stock-specific bets. Index funds minimise both; active strategies accept higher TE."},
+{c:"PMP · Index-Based Equity",n:"Tracking error of an index portfolio",f:"TE = σ(R_p − R_b)",d:"R_p = portfolio return, R_b = benchmark return, σ = standard deviation of the return differential, annualised."},
+{c:"PMP · Index-Based Equity",n:"Cash drag on an index portfolio",f:"Drag = w_cash × (R_eq − R_mm)",d:"w_cash = cash weight, R_eq = equity return, R_mm = money-market rate earned on the cash."},
+{c:"PMP · Index-Based Equity",n:"Index portfolio total return decomposition",f:"R_p = R_idx − f − c_t − ε_s + r_lend + r_cash",d:"R_idx = index return, f = fees, c_t = transaction costs, ε_s = sampling residual, r_lend = lending revenue, r_cash = cash spread."},
+{c:"PMP · Index-Based Equity",n:"Implicit financing cost of an equity index future",f:"c_carry = r_f − d",d:"r_f = risk-free rate (cost of carry), d = dividend yield of the index. Embedded in the futures price versus spot."},
+
+/* --- Active equity --- */
+{c:"PMP · Active Equity: Portfolio Construction",n:"Jensen's alpha",f:"α = R_p − [R_f + β_p(R_m − R_f)]",d:"CAPM-adjusted outperformance. Links to the fundamental law via E(α) = IC × √BR × σ_A × TC."},
+{c:"PMP · Active Equity: Portfolio Construction",n:"Active risk (tracking error)",f:"σ_A = √Var(R_P − R_B)",d:"R_P = portfolio return, R_B = benchmark return, σ_A = standard deviation of active return."},
+{c:"PMP · Active Equity: Portfolio Construction",n:"Days-to-trade (capacity)",f:"Days-to-trade = Position$ ÷ (0.10 × ADV$)",d:"Position$ = AUM × target weight; ADV$ = average daily dollar volume. If days-to-trade exceeds the strategy horizon, the fund is capacity-constrained."},
+{c:"PMP · Active Equity: Portfolio Construction",n:"Expected active return from information ratio",f:"R_A = IR × TE",d:"IR = information ratio, TE = tracking error (active risk)."},
+{c:"PMP · Active Equity: Portfolio Construction",n:"Correlation-adjusted effective breadth",f:"BR_eff = N ÷ [1 + (N−1)ρ]",d:"N = raw number of bets, ρ = average pairwise correlation across signals. Correlated signals collapse effective breadth fast."},
+{c:"PMP · Active Equity: Portfolio Construction",n:"Active share of an equity portfolio",f:"AS = ½ Σᴺ |w_p,i − w_b,i|",d:"w_p,i = portfolio weight in stock i, w_b,i = benchmark weight in stock i, N = combined universe."},
+
+/* --- LDI --- */
+{c:"PMP · Liability-Driven & Index FI",n:"DV01 (dollar value of an 01)",f:"DV01 = (Modified duration × V) ÷ 10,000",d:"Dollar price change for a 1bp decline in yield. V = portfolio market value."},
+{c:"PMP · Liability-Driven & Index FI",n:"DV01 (price value of a basis point) — alternative form",f:"DV01 = D_mod × MV × 0.0001",d:"D_mod = modified duration, MV = market value of the bond or portfolio. Same quantity, different arrangement."},
+{c:"PMP · Liability-Driven & Index FI",n:"Futures contracts for duration adjustment",f:"N_f = [(D_target − D_portfolio) × V_portfolio] ÷ (D_futures × V_futures)",d:"D = duration, V = dollar value. Positive N_f → buy futures to extend duration; negative → sell futures to shorten it."},
+{c:"PMP · Liability-Driven & Index FI",n:"Liability-driven surplus duration",f:"ΔSurplus = (D_A × A − D_L × L) × Δy",d:"D_A = asset duration, A = asset value, D_L = liability duration, L = liability value. Immunised when D_A × A = D_L × L."},
+{c:"PMP · Liability-Driven & Index FI",n:"Macaulay duration of a bond portfolio",f:"D_Mac = Σ t·CF_t/(1+y)^t ÷ Σ CF_t/(1+y)^t",d:"t = time of cash flow, CF_t = cash flow at t, y = yield, N = number of periods."},
+{c:"PMP · Liability-Driven & Index FI",n:"Modified duration from Macaulay duration",f:"D_mod = D_Mac ÷ (1 + y)",d:"D_Mac = Macaulay duration, y = periodic yield to maturity."},
+{c:"PMP · Liability-Driven & Index FI",n:"Dollar duration of a portfolio or liability",f:"DD = MV × D",d:"MV = market value (or PV of liabilities), D = modified or effective duration. Used to size LDI hedges."},
+{c:"PMP · Liability-Driven & Index FI",n:"Insurer duration-matched immunisation",f:"D_A × A = D_L × L",d:"D_A = asset duration, A = assets, D_L = liability duration, L = liabilities."},
+{c:"PMP · Liability-Driven & Index FI",n:"DV01-based hedge ratio",f:"N = − DV01_portfolio ÷ DV01_hedge",d:"Negative means short the hedge instrument. For a cross-hedge: N = −(DV01_p ÷ DV01_h) × β_spread."},
+
+/* --- Yield curve --- */
+{c:"PMP · Yield Curve Strategies",n:"Key rate duration",f:"%ΔP ≈ − Σ_k KRD_k × Δy_k",d:"KRD_k = key rate duration at maturity k. Used for non-parallel shifts; the sum of KRDs approximates effective duration."},
+{c:"PMP · Yield Curve Strategies",n:"Butterfly spread conditions",f:"Profit condition (long butterfly): 2y_5Y < y_2Y + y_10Y",d:"Net position: long the belly, short the wings (or the reverse). A positive butterfly means the curve humps in the middle. Measures curvature."},
+{c:"PMP · Yield Curve Strategies",n:"Barbell vs bullet convexity",f:"At the same duration: C_barbell > C_bullet",d:"Barbell (short + long) has higher convexity; bullet (middle) lower. Barbell wins in high volatility, bullet in stable curves."},
+{c:"PMP · Yield Curve Strategies",n:"Expected price change from rate view vs forwards",f:"E(ΔP) ≈ −D(Δy_view − Δy_fwd) + ½C(Δy_view)²",d:"D = duration, C = convexity, Δy_view = your view of the yield change, Δy_fwd = the forward-implied change. Only the deviation from forwards earns you anything."},
+{c:"PMP · Yield Curve Strategies",n:"Expected bond return from a yield change",f:"E(R) ≈ Y + Rolldown − D_mod·Δy + ½C(Δy)²",d:"Y = yield income, D_mod = modified duration, C = convexity, Δy = yield change."},
+{c:"PMP · Yield Curve Strategies",n:"Expected return of a yield curve strategy",f:"E(R) = Y + Rolldown + E(ΔP_view) − E(Credit Loss) ± E(FX)",d:"Y = yield income, ΔP_view = price change from the rate view, FX = currency return."},
+{c:"PMP · Yield Curve Strategies",n:"Hedged cross-currency bond return under CIP",f:"R_hedged ≈ R_local − (r_local − r_base)",d:"R_local = local bond return, r_local = local risk-free rate, r_base = base-currency risk-free rate."},
+
+/* --- Credit --- */
+{c:"PMP · Credit Strategies",n:"Credit spread duration",f:"%ΔP ≈ − Spread duration × Δs",d:"Δs = change in credit spread. For corporate bonds spread duration ≈ modified duration; for FRNs ≈ time to reset."},
+{c:"PMP · Credit Strategies",n:"Excess return over Treasuries",f:"XR ≈ s·t − Δs·D_s − t·p·L",d:"s = spread, t = horizon, D_s = spread duration, p = probability of default, L = loss rate."},
+{c:"PMP · Credit Strategies",n:"CDS–cash basis",f:"Basis = CDS spread − Z-spread_cash",d:"CDS spread = single-name or index protection premium (bps); Z-spread_cash = zero-volatility spread on the cash bond (bps)."},
+{c:"PMP · Credit Strategies",n:"Option-adjusted spread",f:"OAS = Z-spread − Option cost",d:"Z-spread = zero-volatility spread (bps); option cost = embedded option value from a lattice or Monte Carlo (bps)."},
+{c:"PMP · Credit Strategies",n:"Conditional value at risk",f:"CVaR_α = E[L | L > VaR_α]",d:"L = portfolio loss, VaR_α = value at risk at confidence level α, E[·] = expected value conditional on breaching the tail."},
+{c:"PMP · Credit Strategies",n:"FX-hedged USD-equivalent OAS on foreign credit",f:"OAS_USD-eq = OAS_foreign − (r_base − r_foreign)",d:"r_base, r_foreign = short rates in base and foreign currency; the differential is the rolling FX-forward hedge cost."},
+
+/* --- Trade execution --- */
+{c:"PMP · Trade Strategy & Execution",n:"Implementation shortfall",f:"IS = (Paper portfolio gain − Actual portfolio gain) ÷ Investment decision value",d:"Components: delay cost + trading cost + opportunity cost. Measures total cost of executing versus the decision price."},
+{c:"PMP · Trade Strategy & Execution",n:"Implementation shortfall (decomposition)",f:"IS = Explicit + Delay + Impact + Opportunity",d:"Explicit = commissions and fees; delay = decision-to-desk drift; impact = price move from the trade; opportunity = return on unfilled shares."},
+{c:"PMP · Trade Strategy & Execution",n:"Delay cost component",f:"Delay = (P_arrival − P_decision) × S_filled",d:"P_arrival = price when the trader receives the order, P_decision = PM decision price, S_filled = shares executed."},
+{c:"PMP · Trade Strategy & Execution",n:"Trading cost component",f:"Trading = (P_exec − P_arrival) × S_filled",d:"P_exec = average execution price, P_arrival = arrival price, S_filled = shares filled."},
+{c:"PMP · Trade Strategy & Execution",n:"Opportunity cost component",f:"Opportunity = (P_close − P_decision) × S_unfilled",d:"P_close = closing price, P_decision = decision price, S_unfilled = shares not filled."},
+{c:"PMP · Trade Strategy & Execution",n:"Explicit fees component",f:"Fees = c × S_exec + taxes",d:"c = commission per share, S_exec = shares executed, taxes = transaction taxes."},
+{c:"PMP · Trade Strategy & Execution",n:"VWAP benchmark",f:"VWAP = Σ(P_t × V_t) ÷ Σ V_t",d:"P_t = price at time t, V_t = volume at time t. Trade cost vs VWAP = (VWAP − execution price) for buys. Manipulable, and meaningless for large orders."},
+{c:"PMP · Trade Strategy & Execution",n:"VWAP transaction cost (buy and sell)",f:"Buy: P_exec − VWAP   Sell: VWAP − P_exec",d:"Positive is unfavourable in both directions. VWAP = period volume-weighted average price."},
+{c:"PMP · Trade Strategy & Execution",n:"Market impact cost",f:"Market impact = (P_exec − P_pre) ÷ P_pre   (for buys)",d:"P_exec = average execution price, P_pre = pre-trade benchmark. Temporary impact reverses, permanent impact does not. Higher urgency means more impact."},
+{c:"PMP · Trade Strategy & Execution",n:"Square-root market impact model",f:"Impact ∝ √(shares ÷ ADV)",d:"Shares = order size, ADV = average daily volume. Doubling order size raises impact by roughly 41%, not 100%."},
+
+/* --- Institutional / endowment --- */
+{c:"PC · Institutional Investors",n:"Effective spending rate",f:"r_eff = S_t ÷ MV_t",d:"S_t = current period spending distribution, MV_t = current portfolio market value."},
+{c:"PC · Institutional Investors",n:"Endowment smoothing spending rule",f:"S_t = w·S_(t−1)(1+π) + (1−w)·r·MV_t",d:"w = smoothing weight, S = spending, π = inflation, r = target rate, MV = current market value."},
+{c:"PC · Institutional Investors",n:"Illiquidity budget",f:"IB = TP − (Sp + CC + RB + SR)",d:"TP = total portfolio, Sp = spending reserve, CC = capital calls, RB = rebalancing buffer, SR = stress reserve."},
+{c:"PC · Institutional Investors",n:"Endowment spending rate",f:"s = Annual spending ÷ Portfolio value",d:"For example 5% is $40M drawn on an $800M portfolio."},
+{c:"PC · Institutional Investors",n:"Endowment real return target",f:"R_real = s + c",d:"s = spending rate, c = management cost ratio."},
+{c:"PC · Institutional Investors",n:"Foundation minimum nominal return target",f:"R ≥ 0.05 + c + π",d:"0.05 = the 5% IRS minimum distribution floor, c = costs, π = inflation."},
+{c:"PC · Institutional Investors",n:"Pension funded ratio",f:"FR = A ÷ L",d:"A = market value of plan assets, L = present value of liabilities (e.g. the PBO)."},
+{c:"PC · Institutional Investors",n:"Pension surplus",f:"S = A − L",d:"A = market value of plan assets, L = present value of liabilities. Surplus optimisation maximises return on S."},
+{c:"PC · Institutional Investors",n:"SWF stabilisation sub-fund sizing rule",f:"AUM_stab = f × G × n",d:"f = fiscal dependence on the commodity, G = annual government spending, n = years of shortfall coverage."},
+{c:"PC · Institutional Investors",n:"Norway-style SWF fiscal transfer rule",f:"T_annual = r_real × V_fund",d:"r_real = expected real return (around 3%), V_fund = fund market value. Principal is preserved."},
+{c:"PC · Institutional Investors",n:"Commodity SWF energy-sector exposure cap",f:"w_energy ≤ w_bench − Δ",d:"w_bench = benchmark energy weight, Δ = transition-risk tilt (e.g. 30%) to offset correlation with inflows."},
+{c:"PC · Institutional Investors",n:"SWF maximum single-year withdrawal under charter cap",f:"W_max = c × AUM_3y",d:"c = charter cap (e.g. 5%), AUM_3y = three-year average AUM."},
+{c:"PC · Institutional Investors",n:"Liquidity coverage ratio for an alternatives programme",f:"LCR = L ÷ CF_12m",d:"L = liquid assets, CF_12m = next-12-month committed cash outflows (capital calls plus benefits)."},
+{c:"PC · Institutional Investors",n:"Stress liquidity coverage ratio",f:"LCR_stress = Accessible liquid assets_stress ÷ Cash demands_stress",d:"Minimum prudent target is at least 2× for illiquid-heavy portfolios."},
+
+/* --- Alternatives exposure --- */
+{c:"PC · Alternative Investments",n:"Total PE economic exposure",f:"E_PE = NAV + UC",d:"NAV = net asset value of PE holdings, UC = unfunded capital commitments."},
+{c:"PC · Alternative Investments",n:"Effective PE allocation including unfunded commitments",f:"w_PE^eff = (NAV + UC) ÷ (P + UC)",d:"NAV = PE net asset value, UC = unfunded commitments, P = total portfolio value."},
+{c:"PC · Alternative Investments",n:"Effective equity beta from a PE allocation",f:"β_eff = w_eq + w_PE × β_PE",d:"w_eq = public equity weight, w_PE = PE weight, β_PE ≈ 1.3 (PE equity beta)."},
+
+/* --- Private wealth --- */
+{c:"AA · Real-World Constraints",n:"Required pre-tax nominal return for a private client",f:"r = [(S − I)/V + π] ÷ (1 − t) + f",d:"S = spending need, I = other income, V = portfolio value, π = inflation, t = tax rate, f = advisory fees."},
+{c:"AA · Real-World Constraints",n:"Real after-tax return approximation",f:"r_real,at ≈ r_nom − π − t·r_nom",d:"r_nom = nominal return, π = inflation rate, t = tax rate on the nominal gain."},
+{c:"AA · Real-World Constraints",n:"Taxable-equivalent yield on a municipal bond",f:"TEY = y_muni ÷ (1 − t)",d:"y_muni = muni pretax yield, t = the investor's marginal tax rate."},
+{c:"AA · Real-World Constraints",n:"Human capital as present value of future labour income",f:"HC = Σᴺ E[w_t] ÷ (1+r)^t",d:"w_t = expected labour income in year t, r = risk-adjusted discount rate, N = remaining working years."},
+{c:"AA · Real-World Constraints",n:"Economic net worth",f:"ENW = FC + PV(HC) − PV(L) − PV(C)",d:"FC = financial capital, PV(HC) = PV of human capital, PV(L) = PV of liabilities, PV(C) = PV of future consumption needs."},
+{c:"AA · Real-World Constraints",n:"Leveraged portfolio return on equity",f:"r_p = r_i + (V_B ÷ V_E)(r_i − r_B)",d:"r_i = asset return, r_B = borrowing cost, V_B = borrowed value, V_E = equity."},
+
+/* --- Asset allocation core --- */
+{c:"AA · Overview & Principles",n:"Mean–variance optimal portfolio weight",f:"w* = (1/λ) Σ⁻¹ (μ − r_f·1)",d:"λ = risk aversion, Σ = covariance matrix, μ = expected returns."},
+{c:"AA · Overview & Principles",n:"Mean–variance utility function",f:"U = E(R_p) − 0.5 · λ · σ_p²",d:"E(R_p) = expected portfolio return, λ = risk aversion coefficient (1–10), σ_p² = portfolio variance."},
+{c:"AA · Overview & Principles",n:"Corner portfolio blending",f:"w_A = [E(R_P) − E(R_B)] ÷ [E(R_A) − E(R_B)],  w_B = 1 − w_A",d:"Blends two adjacent corner portfolios A and B to hit a target return E(R_P). All blends lie on the efficient frontier."},
+{c:"AA · Overview & Principles",n:"Black–Litterman expected return",f:"Equilibrium: Π = δΣw_mkt\nBlended: E(R) = [(τΣ)⁻¹ + PᵀΩ⁻¹P]⁻¹[(τΣ)⁻¹Π + PᵀΩ⁻¹Q]",d:"δ = risk aversion, w_mkt = market cap weights, P and Q encode the investor's views, Ω their uncertainty."},
+{c:"AA · Overview & Principles",n:"Portfolio rebalancing trigger (range-based)",f:"Rebalance when |w_i − w_i*| > Δ_i",d:"w_i* = target weight, Δ_i = tolerance band. Wider bands mean lower costs and less precision; correlation-adjusted bands are wider for high-correlation assets."},
+{c:"AA · Overview & Principles",n:"Number of correlation inputs required for MVO",f:"N_ρ = n(n−1) ÷ 2",d:"n = number of asset classes. MVO also needs n expected returns and n standard deviations."},
+{c:"AA · Overview & Principles",n:"Total MVO inputs required for n asset classes",f:"N = 2n + n(n−1)/2",d:"Counts n expected returns, n standard deviations and n(n−1)/2 correlations."},
+{c:"AA · Overview & Principles",n:"Roy's safety-first ratio",f:"SF = [E(R_p) − R_L] ÷ σ_p",d:"R_L = the minimum acceptable (threshold) return. The optimal portfolio maximises SF; under normality this minimises the probability of returning below R_L."},
+{c:"AA · Overview & Principles",n:"Marginal contribution to risk (MCTR)",f:"MCTR_i = β_i × σ_p,  where β_i = Cov(R_i, R_p) ÷ σ_p²",d:"Measures the risk added by a small increase in asset i's weight."},
+{c:"AA · Overview & Principles",n:"Absolute contribution to risk (ACTR)",f:"ACTR_i = w_i × MCTR_i = w_i × β_i × σ_p",d:"Contributions sum to total portfolio risk: Σ ACTR_i = σ_p. A risk budget is a set of target ACTRs."},
+{c:"AA · Real-World Constraints",n:"TAA permitted weight range around SAA",f:"w_TAA ∈ [w_SAA − b, w_SAA + b]",d:"w_SAA = policy weight, b = the IPS-defined TAA band (e.g. ±5%)."},
+{c:"AA · Real-World Constraints",n:"Net after-cost tactical premium",f:"α_net = α_gross − TC − T",d:"α_gross = expected gross tactical alpha, TC = transaction costs, T = realised tax cost."},
+
+/* --- Forecasting returns --- */
+{c:"AA · Forecasting Returns",n:"Grinold–Kroner expected equity return",f:"E(R) = D/P − ΔS + g + Δ(P/E)",d:"D/P = dividend yield, ΔS = net share issuance, g = nominal earnings growth, Δ(P/E) = repricing."},
+{c:"AA · Forecasting Returns",n:"Taylor rule policy rate",f:"i_t = r* + π_t + 0.5(π_t − π*) + 0.5(y_t − y*)",d:"r* = neutral real rate, π = inflation, π* = inflation target, y − y* = output gap."},
+{c:"AA · Forecasting Returns",n:"Covered interest rate parity",f:"F/S = (1 + i_d) ÷ (1 + i_f)",d:"F = forward rate, S = spot rate, i_d = domestic interest rate, i_f = foreign interest rate."},
+{c:"AA · Forecasting Returns",n:"Fixed-income expected return building blocks",f:"E(R) = r_f + π^e + TP + CP + LP",d:"r_f = real risk-free rate, π^e = expected inflation, TP = term premium, CP = credit premium, LP = liquidity premium."},
+{c:"AA · Forecasting Returns",n:"Expected fixed-income return decomposition",f:"E(R_FI) = YTM + Roll-down + ΔP_yield − L_credit − L_FX",d:"YTM = yield to maturity, ΔP = price change from a curve shift, L = expected losses."},
+{c:"AA · Forecasting Returns",n:"GARCH(1,1) variance forecast",f:"σ_t² = ω + α·ε_(t−1)² + β·σ_(t−1)²",d:"ω = long-run volatility anchor, α = weight on the last squared shock, β = weight on the prior variance estimate."},
+{c:"AA · Forecasting Returns",n:"Singer–Terhaar blended risk premium",f:"RP = w(σ·ρ·SR_g) + (1 − w)(σ·SR_g)",d:"w = integration weight, σ = asset volatility, ρ = correlation with the global portfolio, SR_g = global Sharpe ratio."},
+{c:"AA · Forecasting Returns",n:"Geometric mean approximation from arithmetic mean and variance",f:"G ≈ A − 0.5σ²",d:"G = geometric (compound) mean return, A = arithmetic mean return, σ² = variance of returns."},
+
+/* --- Performance evaluation --- */
+{c:"PM · Performance Evaluation",n:"Information ratio",f:"IR = (R̄_p − R̄_B) ÷ σ(R_p − R_B) = ᾱ ÷ TE",d:"ᾱ = mean active return, TE = tracking error. Measures active return per unit of active risk."},
+{c:"PM · Performance Evaluation",n:"Fundamental law of active management",f:"IR = IC × √BR",d:"IC = information coefficient, BR = investment breadth. Expected active return E(R_A) = IC × √BR × σ_A, with the transfer coefficient assumed to be 1."},
+{c:"PM · Performance Evaluation",n:"Sharpe ratio",f:"SR_p = (R_p − R_f) ÷ σ_p",d:"Reward-to-variability using total risk. Sharpe of a combined portfolio: SR_C² = SR_B² + IR²."},
+{c:"PM · Performance Evaluation",n:"M-squared (M²)",f:"M² = (R_p − R_f)(σ_m ÷ σ_p) + R_f",d:"Risk-adjusted return scaled to match the market's volatility. M² > R_m means the portfolio outperformed on a risk-adjusted basis."},
+{c:"PM · Performance Evaluation",n:"Treynor ratio",f:"T = (R_p − R_f) ÷ β_p",d:"R_p = portfolio return, R_f = risk-free rate, β_p = portfolio beta (systematic risk only)."},
+{c:"PM · Performance Evaluation",n:"Sortino ratio",f:"Sortino = (R_p − MAR) ÷ σ_d",d:"MAR = minimum acceptable return, σ_d = downside deviation of returns falling below the MAR."},
+{c:"PM · Performance Evaluation",n:"Tracking error (from a return series)",f:"TE = σ(R_p − R_B) = √[Σ(r_p,t − r_B,t − ᾱ)² ÷ (T−1)]",d:"Also called active risk or tracking risk. Annualise with TE_annual = TE_monthly × √12."},
+{c:"PM · Performance Evaluation",n:"Brinson allocation effect",f:"A_i = (w_p,i − w_b,i)(R_b,i − R_b)",d:"w_p = portfolio sector weight, w_b = benchmark sector weight, R_b,i = sector benchmark return, R_b = total benchmark return."},
+{c:"PM · Performance Evaluation",n:"Brinson selection effect",f:"S_i = w_b,i (R_p,i − R_b,i)",d:"w_b = benchmark sector weight, R_p,i = portfolio sector return, R_b,i = benchmark sector return."},
+{c:"PM · Performance Evaluation",n:"Downside capture ratio",f:"DC = R̄_p,down ÷ R̄_b,down",d:"Averaged over periods when the benchmark return is negative. Below 100% means the manager dampens losses."},
+{c:"PM · Performance Evaluation",n:"Upside capture ratio",f:"UC = R̄_p,up ÷ R̄_b,up",d:"Averaged over periods when the benchmark return is positive. Above 100% means the manager amplifies up markets."},
+{c:"PM · Performance Evaluation",n:"Up/down capture ratio",f:"Up/Down = Upside Capture ÷ Downside Capture",d:"A ratio above 1.0 indicates favourable asymmetry."},
+{c:"PM · Investment Manager Selection",n:"Symmetric performance-based fee",f:"Fee = Base + s × (R_p − R_b)",d:"Base = base fee, s = sharing rate, R_p = portfolio return, R_b = benchmark return."},
+
+/* --- Options --- */
+{c:"DRV · Options Strategies",n:"Delta of call and put",f:"Call: Δ_c = N(d₁) ∈ (0, 1)\nPut: Δ_p = N(d₁) − 1 ∈ (−1, 0)\nPut-call: Δ_c − Δ_p = 1",d:"Approximate change in the option price for a $1 change in the underlying."},
+{c:"DRV · Options Strategies",n:"Protective put payoff",f:"Payoff = S_T + max(X − S_T, 0) = max(S_T, X)",d:"Profit = Payoff − (S_0 + p), where p = put premium. Limits downside while preserving upside."},
+{c:"DRV · Options Strategies",n:"Covered call payoff at expiration",f:"Payoff = S_T − max(S_T − X, 0) = min(S_T, X)",d:"Long stock plus short call at strike X. Profit = Payoff − S_0 + c, where c = call premium received. Caps upside, enhances income in flat or down markets."},
+{c:"DRV · Options Strategies",n:"Collar payoff at expiration",f:"Payoff = S_T + max(X_L − S_T, 0) − max(S_T − X_H, 0) = min(max(S_T, X_L), X_H)",d:"Long stock, long put at X_L, short call at X_H. Limits gains above X_H and protects below X_L."},
+{c:"DRV · Options Strategies",n:"Long straddle breakeven prices",f:"BE = K ± (C_0 + P_0)",d:"K = common strike, C_0 = call premium paid, P_0 = put premium paid."},
+{c:"DRV · Options Strategies",n:"Maximum loss on short stock plus long call",f:"Max Loss = K − S_0 + C_0",d:"The synthetic long put. K = call strike, S_0 = short entry price, C_0 = call premium paid."},
+{c:"DRV · Options Strategies",n:"Put–call parity",f:"S + P = C + PV(K)",d:"S = stock price, P = put premium, C = call premium, K = strike, PV(K) = present value of the strike."},
+
+/* --- Futures / swaps --- */
+{c:"DRV · Swaps, Forwards & Futures",n:"Number of bond futures to adjust portfolio duration",f:"N = (DD_T − DD_P) ÷ DD_f",d:"DD_T = target dollar duration, DD_P = current dollar duration, DD_f = dollar duration per futures contract (BPV adjusted by the conversion factor)."},
+{c:"DRV · Swaps, Forwards & Futures",n:"Number of equity futures to adjust portfolio beta",f:"N = [(β_T − β_P) ÷ β_F] × [V ÷ (P_f × m)]",d:"β_T = target beta, β_P = current beta, β_F = futures beta, V = portfolio value, P_f = futures price, m = multiplier."},
+{c:"DRV · Swaps, Forwards & Futures",n:"Variance swap payoff at maturity",f:"Payoff = N_var × (σ_realized² − σ_strike²)",d:"N_var = variance notional, σ_realized = realised volatility (%), σ_strike = strike volatility (%)."},
+{c:"DRV · Swaps, Forwards & Futures",n:"Variance notional converted from vega notional",f:"N_var = N_vega ÷ (2 × σ_strike)",d:"N_vega = vega notional ($ per vol point), σ_strike = strike volatility in whole-number percent."},
+
+/* --- Currency --- */
+{c:"DRV · Currency Management",n:"Roll yield on a currency forward hedge",f:"Roll yield = (F − S) ÷ S",d:"F = forward rate, S = spot rate. Approximately equals the domestic minus foreign interest rate."},
+{c:"DRV · Currency Management",n:"Minimum-variance hedge ratio (MVHR)",f:"h* = ρ_A,B × (σ_A ÷ σ_B)",d:"A = asset hedged, B = hedging instrument, ρ = correlation, σ = volatility."},
+{c:"DRV · Currency Management",n:"Domestic-currency return on a foreign asset",f:"R_DC = (1 + R_FC)(1 + R_FX) − 1",d:"R_FC = foreign asset return, R_FX = % change in the exchange rate (domestic per foreign). The shortcut R_FC + R_FX drops the cross-product, which matters once either exceeds 5–10%."},
+];
+
+/* append formula cards to the deck — indices continue after the concept
+   cards, so any progress already saved stays valid */
+FORMULAS.forEach(f=>CARDS.push({t:'formula',c:f.c,q:f.n,f:f.f,d:f.d}));
+
+/* ============================================================
    STATE
    ============================================================ */
 const KEY='cfa_l3_state_v1';
 const SPRINT_SIZE=5;
 let store={seen:{},hits:{},misses:{}};   // keyed by card index
 let view='home';
+let deckMode='all';           // 'all' | 'concepts' | 'formulas'
+let refFilter='';
 let sprint=[], sprintPos=0, revealed=0, sprintLog=[];
+const isFormula=i=>CARDS[i].t==='formula';
+function inMode(i){
+  if(deckMode==='concepts') return !isFormula(i);
+  if(deckMode==='formulas') return isFormula(i);
+  return true;
+}
 const app=document.getElementById('app');
 const CATS=[...new Set(CARDS.map(c=>c.c))];
 
@@ -565,15 +755,18 @@ function strength(i){
   return h/(h+m);
 }
 function catStats(cat){
-  const idx=CARDS.map((c,i)=>[c,i]).filter(([c])=>c.c===cat).map(([,i])=>i);
+  const idx=CARDS.map((c,i)=>[c,i]).filter(([c],i)=>c.c===cat).map(([,i])=>i).filter(inMode);
   const seen=idx.filter(i=>store.seen[i]).length;
-  const score=idx.reduce((s,i)=>s+strength(i),0)/idx.length;
+  const score=idx.length?idx.reduce((s,i)=>s+strength(i),0)/idx.length:0;
   return {idx,total:idx.length,seen,score};
 }
+function activeCats(){
+  return CATS.filter(c=>catStats(c).total>0);
+}
 function totals(){
-  const all=CARDS.map((_,i)=>i);
+  const all=CARDS.map((_,i)=>i).filter(inMode);
   return {
-    total:CARDS.length,
+    total:all.length,
     seen:all.filter(i=>store.seen[i]).length,
     solid:all.filter(i=>strength(i)>=0.67&&store.seen[i]).length,
     shaky:all.filter(i=>store.seen[i]&&strength(i)<0.67).length
@@ -585,7 +778,7 @@ function buildSprint(forcedCat){
   let cat=forcedCat;
   if(!cat){
     // rank categories: unseen coverage first, then low strength
-    const ranked=CATS.map(c=>{
+    const ranked=activeCats().map(c=>{
       const s=catStats(c);
       const coverage=s.seen/s.total;
       return {c, key: s.score*0.65 + coverage*0.35};
@@ -601,7 +794,7 @@ function buildSprint(forcedCat){
   });
   let picked=pool.slice(0,SPRINT_SIZE);
   if(picked.length<SPRINT_SIZE){
-    const rest=CARDS.map((_,i)=>i).filter(i=>!picked.includes(i))
+    const rest=CARDS.map((_,i)=>i).filter(inMode).filter(i=>!picked.includes(i))
       .sort((a,b)=>strength(a)-strength(b));
     picked=picked.concat(rest.slice(0,SPRINT_SIZE-picked.length));
   }
@@ -628,13 +821,20 @@ function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;');}
 
 function renderHome(){
   const t=totals();
-  const ranked=CATS.map(c=>({c,...catStats(c)}))
+  const ranked=activeCats().map(c=>({c,...catStats(c)}))
     .sort((a,b)=>(a.score*0.65+(a.seen/a.total)*0.35)-(b.score*0.65+(b.seen/b.total)*0.35));
   const weakest=ranked[0];
+  const nF=CARDS.filter(c=>c.t==='formula').length;
 
   app.innerHTML=`
   <div class="topbar">
-    <div><h1>CFA L3 Sprints</h1><div class="sub">${CARDS.length} cards · ${CATS.length} topics</div></div>
+    <div><h1>CFA L3 Sprints</h1><div class="sub">${CARDS.length} cards · ${nF} formulas · ${CATS.length} topics</div></div>
+  </div>
+
+  <div class="modebar">
+    <button class="mode ${deckMode==='all'?'on':''}" data-m="all">Everything</button>
+    <button class="mode ${deckMode==='concepts'?'on':''}" data-m="concepts">Concepts</button>
+    <button class="mode ${deckMode==='formulas'?'on':''}" data-m="formulas">Formulas</button>
   </div>
 
   <div class="hero">
@@ -643,6 +843,7 @@ function renderHome(){
     <p>${weakest.seen}/${weakest.total} cards attempted${weakest.seen?` · ${Math.round(weakest.score*100)}% recall`:''}. Five cards, about 90 seconds.</p>
     <button class="big-btn" id="go">Start sprint →</button>
     <button class="big-btn secondary" id="goRandom">Sprint a random topic</button>
+    <button class="big-btn secondary" id="goRef">📖 Formula reference</button>
   </div>
 
   <div class="stat-row">
@@ -672,7 +873,13 @@ function renderHome(){
   <div style="height:24px"></div>`;
 
   document.getElementById('go').onclick=()=>buildSprint(weakest.c);
-  document.getElementById('goRandom').onclick=()=>buildSprint(CATS[Math.floor(Math.random()*CATS.length)]);
+  document.getElementById('goRandom').onclick=()=>{
+    const a=activeCats(); buildSprint(a[Math.floor(Math.random()*a.length)]);
+  };
+  document.getElementById('goRef').onclick=()=>{view='ref';refFilter='';render();};
+  document.querySelectorAll('.mode').forEach(b=>{
+    b.onclick=()=>{deckMode=b.dataset.m;render();};
+  });
   document.querySelectorAll('.topic').forEach(el=>{
     el.onclick=()=>buildSprint(el.dataset.cat);
   });
@@ -708,6 +915,18 @@ function renderSprint(){
     controls = revealed<n
       ? `<button class="reveal-btn" id="rev">Reveal next (${revealed+1}/${n})</button>`
       : gradeRow();
+  }
+
+  if(card.t==='formula'){
+    body=`<div class="panel">
+      <div class="cat-tag">${esc(card.c)}</div>
+      <div class="f-ask">State the formula</div>
+      <p class="prompt small">${esc(card.q)}</p>
+      ${revealed?`<div class="f-box">${esc(card.f)}</div>
+                  <div class="answer">${esc(card.d)}</div>`
+                :`<div class="tap-hint">write it out, then reveal</div>`}
+    </div>`;
+    controls=revealed?gradeRow():`<button class="reveal-btn" id="rev">Reveal formula</button>`;
   }
 
   if(card.t==='contrast'){
@@ -775,11 +994,48 @@ function renderDone(){
   document.getElementById('home').onclick=()=>{view='home';render();};
 }
 
+function renderRef(){
+  const q=refFilter.trim().toLowerCase();
+  const rows=CARDS.map((c,i)=>({c,i})).filter(x=>x.c.t==='formula')
+    .filter(x=>!q||(x.c.q+' '+x.c.f+' '+x.c.d+' '+x.c.c).toLowerCase().includes(q));
+  const byCat={};
+  rows.forEach(x=>{(byCat[x.c.c]=byCat[x.c.c]||[]).push(x);});
+  app.innerHTML=`
+  <div class="topbar">
+    <div><h1>Formula reference</h1><div class="sub">${rows.length} shown · look up, don't drill</div></div>
+    <button class="icon-btn" id="back">Done</button>
+  </div>
+  <input class="search" id="q" placeholder="Search formulas, terms, topics…" value="${esc(refFilter)}">
+  <div id="reflist">
+    ${Object.keys(byCat).map(cat=>`
+      <div class="section-label">${esc(cat)}</div>
+      ${byCat[cat].map(x=>`
+        <div class="ref-card">
+          <div class="ref-name">${esc(x.c.q)}</div>
+          <div class="f-box">${esc(x.c.f)}</div>
+          <div class="ref-d">${esc(x.c.d)}</div>
+        </div>`).join('')}
+    `).join('')}
+    ${rows.length===0?'<div class="empty-state">Nothing matches that.</div>':''}
+  </div>
+  <div style="height:30px"></div>`;
+  document.getElementById('back').onclick=()=>{view='home';render();};
+  const inp=document.getElementById('q');
+  inp.oninput=()=>{
+    refFilter=inp.value;
+    const pos=inp.selectionStart;
+    renderRef();
+    const ni=document.getElementById('q');
+    ni.focus(); ni.setSelectionRange(pos,pos);
+  };
+}
+
 function render(){
   if(view==='home') renderHome();
   else if(view==='sprint') renderSprint();
+  else if(view==='ref') renderRef();
   else renderDone();
-  window.scrollTo(0,0);
+  if(view!=='ref') window.scrollTo(0,0);
 }
 
 (async function init(){ await load(); render(); })();
